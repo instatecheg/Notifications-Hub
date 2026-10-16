@@ -15,17 +15,100 @@ def settings():
     return frappe.get_single("Notification Hub")
 
 
-def normalize_phone(phone, cc="20"):
+# Countries tried for a local number (after the user's own, the default and the site country).
+COMMON_REGIONS = ("SA", "EG", "AE", "KW", "QA", "BH", "OM", "JO", "LB", "IQ", "SD", "YE", "SY", "PS",
+                  "LY", "TN", "DZ", "MA", "TR", "PK", "IN", "BD", "PH", "ID", "NP", "LK", "ET", "KE",
+                  "GB", "US")
+
+
+def normalize_phone(phone, cc="20", regions=None):
+    """International (E.164) form of a phone number, for any country.
+
+    - Already international ("+966 50...", "00966...", "966..."): kept as that country's number.
+    - Local ("0501234567" Saudi, "01012345678" Egypt, ...): looked up, in this order,
+      1. in ``regions`` (the user's own country): any valid number;
+      2. in the default country code ``cc``, the site's country and common countries: a valid mobile
+         (messages go to mobiles, so a Saudi "050" mobile beats Egypt's "050" landline area code);
+      3. in those same countries: any valid number.
+      A local number of another country needs its country code (+.../00...) or the user's time zone
+      set to that country.
+    """
     p = re.sub(r"[^\d+]", "", str(phone or ""))
     if not p:
         return ""
-    if p.startswith("+"):
-        return p
     if p.startswith("00"):
-        return "+" + p[2:]
+        p = "+" + p[2:]
+    if p.startswith("+"):
+        return _e164(p, None) or p
+
+    # Written with the country code but without "+" (e.g. 966501234567, 201012345678).
+    if not p.startswith("0"):
+        international = _e164("+" + p, None, valid_only=True)
+        if international:
+            return international
+
+    own, preferred = _candidate_regions(cc, regions)
+    passes = [(own, False), (preferred, True), (preferred, False)]
+    for region_list, mobile_only in passes:
+        for region in region_list:
+            local = _e164(p, region, valid_only=True, mobile_only=mobile_only)
+            if local:
+                return local
+
+    # Not valid anywhere: previous behaviour with the default country code.
     if p.startswith("0"):
         return "+" + (cc or "20") + p[1:]
     return "+" + p
+
+
+def _e164(number, region, valid_only=False, mobile_only=False):
+    try:
+        import phonenumbers
+        from phonenumbers import PhoneNumberType
+
+        parsed = phonenumbers.parse(number, region)
+        if valid_only and not phonenumbers.is_valid_number(parsed):
+            return ""
+        if mobile_only and phonenumbers.number_type(parsed) not in (
+            PhoneNumberType.MOBILE, PhoneNumberType.FIXED_LINE_OR_MOBILE
+        ):
+            return ""
+        return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+    except Exception:
+        return ""
+
+
+def _candidate_regions(cc=None, regions=None):
+    """(the user's own countries, then the default / site / common countries), in the order tried."""
+    import phonenumbers
+
+    own = [str(r).upper() for r in (regions or []) if r]
+    ordered = []
+    try:
+        if cc:
+            ordered.append(phonenumbers.region_code_for_country_code(int(str(cc).lstrip("+"))))
+    except Exception:
+        pass
+    site_country = frappe.db.get_single_value("System Settings", "country")
+    if site_country:
+        ordered.append(str(frappe.db.get_value("Country", site_country, "code") or "").upper())
+    ordered += list(COMMON_REGIONS)
+    seen = set()
+    preferred = [r for r in ordered if r and r != "ZZ" and not (r in seen or seen.add(r))]
+    return own, preferred
+
+
+def region_for_user(user):
+    """Country (ISO code) of a user, from their time zone (e.g. Asia/Riyadh -> SA), or None."""
+    tz = frappe.db.get_value("User", user, "time_zone") if user else None
+    if not tz:
+        return None
+    try:
+        import pytz
+
+        return next((country for country, zones in pytz.country_timezones.items() if tz in zones), None)
+    except Exception:
+        return None
 
 
 
