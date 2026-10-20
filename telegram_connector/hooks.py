@@ -14,8 +14,11 @@ doctype_js = {
     # "Sales Invoice": "public/js/sales_invoice.js",
 }
 
-# The only automatic message: a Transportation Request reaching "Documents requested" is sent on
-# Telegram to every user with the "Document" role (telegram_connector/transportation_request.py).
+# Automatic messages:
+# - a Transportation Request reaching "Documents requested" -> every user with the "Document" role
+#   (telegram_connector/transportation_request.py);
+# - a Delivery Trip ended by the driver, or the driver asking for the customer location -> the
+#   supervisor who created the trip's request (telegram_connector/delivery_trip.py).
 #
 # Switched off (code kept; uncomment to send them again):
 # - Hub Notification Rules on every doctype:  "*": {"after_insert": _h, "on_update": _h, "on_submit": _h, "on_cancel": _h}
@@ -26,6 +29,10 @@ doctype_js = {
 doc_events = {
     "Transportation Request": {
         "on_update_after_submit": "telegram_connector.transportation_request.on_update_after_submit",
+    },
+    # The driver ends a trip: the supervisor who created its request is asked to review it.
+    "Delivery Trip": {
+        "on_update": "telegram_connector.delivery_trip.on_update",
     },
 }
 
