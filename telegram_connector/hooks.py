@@ -15,7 +15,8 @@ doctype_js = {
 }
 
 # Automatic messages:
-# - a Transportation Request reaching "Documents requested" -> every user with the "Document" role
+# - a Transportation Request reaching "Documents requested" -> every user with the "Document" or
+#   "Trip Documents" role
 #   (telegram_connector/transportation_request.py);
 # - a Delivery Trip ended by the driver, or the driver asking for the customer location -> the
 #   supervisor who created the trip's request (telegram_connector/delivery_trip.py).

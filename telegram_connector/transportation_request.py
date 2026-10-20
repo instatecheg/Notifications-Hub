@@ -1,6 +1,7 @@
 """Telegram message when a Transportation Request reaches "Documents requested".
 
-Every enabled user with the "Document" role gets one message, sent to the mobile number on their
+Every enabled user with the "Document" or "Trip Documents" role (the diesel / documents team that
+presses "Ready for start trip") gets one message, sent to the mobile number on their
 User (Mobile No, otherwise Phone), with:
 - a link that opens the request in the supervisor dashboard,
 - Vehicle Internal Code, Driver Name, From and To.
@@ -17,7 +18,7 @@ from telegram_connector.user_messages import CHANNEL, dashboard_link, send_to_us
 
 DOCTYPE = "Transportation Request"
 STATE = "Documents requested"
-ROLE = "Document"
+ROLES = ("Document", "Trip Documents")
 
 
 def on_update_after_submit(doc, method=None):
@@ -43,7 +44,16 @@ def on_update_after_submit(doc, method=None):
 
 def send_documents_request(name, sent_by=None, base_url=None):
 	doc = frappe.get_doc(DOCTYPE, name)
-	send_to_users(doc, users_with_role(ROLE), message(doc, base_url), "Documents request", sent_by)
+	users = sorted({user for role in ROLES for user in users_with_role(role)})
+	if not users:
+		# Nobody to send to: say so on the request instead of failing silently.
+		doc.add_comment(
+			"Info",
+			f"⚠️ <b>Documents request</b> not sent via <b>{CHANNEL}</b>: no enabled user has the "
+			f"{' or '.join(ROLES)} role.",
+		)
+		return
+	send_to_users(doc, users, message(doc, base_url), "Documents request", sent_by)
 
 
 def _vehicle_internal_code(doc):
