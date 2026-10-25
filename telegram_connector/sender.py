@@ -281,6 +281,34 @@ async def _user_send(api_id, api_hash, session, phone, text, pdf, pdf_name):
         await c.disconnect()
 
 
+async def _resolve_chat(c, chat_id):
+    """Group / channel by its chat id (e.g. -100...). The string session keeps no entity cache, so
+    when the id is not known yet the account's dialogs are loaded to find it."""
+    chat_id = int(str(chat_id).strip())
+    try:
+        return await c.get_entity(chat_id)
+    except ValueError:
+        async for d in c.iter_dialogs():
+            if d.id == chat_id:
+                return d.entity
+    raise NotLinked(f"The Telegram account is not a member of group {chat_id}")
+
+
+async def _user_send_chat(api_id, api_hash, session, chat_id, text, pdf, pdf_name):
+    c = await _connect(api_id, api_hash, session)
+    try:
+        if not await c.is_user_authorized():
+            raise frappe.ValidationError("The session has expired. Please log in to the account again")
+        chat = await _resolve_chat(c, chat_id)
+        await c.send_message(chat, text)
+        if pdf:
+            f = io.BytesIO(pdf)
+            f.name = pdf_name
+            await c.send_file(chat, f)
+    finally:
+        await c.disconnect()
+
+
 async def _user_resolve(api_id, api_hash, session, phone):
     c = await _connect(api_id, api_hash, session)
     try:
@@ -344,6 +372,16 @@ def send_text(chat_id, phone, text, pdf=None, pdf_name="document.pdf"):
         return {"id": chat_id}
     a, h = _creds(s)
     return run_async(_user_send(a, h, _session(s), phone, text, pdf, pdf_name))
+
+
+def send_to_chat(chat_id, text, pdf=None, pdf_name="document.pdf"):
+    """Send to a group chat id: by the bot (Bot mode) or by the logged-in account (User Account mode)."""
+    s = settings()
+    if s.mode == "Bot":
+        return send_text(chat_id, None, text, pdf, pdf_name)
+    a, h = _creds(s)
+    run_async(_user_send_chat(a, h, _session(s), chat_id, (text or "")[:4096], pdf, pdf_name))
+    return {"id": chat_id}
 
 
 # ---------------- Links ----------------
@@ -480,10 +518,11 @@ def deliver(log_name, notify=False):
                 error = f"Could not generate PDF: {e}"
         link = find_link(log.party_type, log.party, log.mobile_no)
         pdf_name = f"{log.reference_name}.pdf"
-        if s.mode == "Bot" and not log.party_type and log.chat_id:
+        if not log.party_type and log.chat_id:
             # Group message: no Telegram Link needed, send straight to the group chat id
+            # (by the bot, or by the logged-in account in User Account mode)
             chat_id = log.chat_id
-            send_text(chat_id, None, log.message, pdf, pdf_name)
+            send_to_chat(chat_id, log.message, pdf, pdf_name)
         elif s.mode == "Bot":
             if not (link and link.status == "Linked" and link.chat_id):
                 link = link or ensure_link(log.party_type, log.party, log.mobile_no)

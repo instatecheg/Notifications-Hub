@@ -73,6 +73,13 @@
    "default": "20"
   },
   {
+   "fieldname": "group_chat_id",
+   "fieldtype": "Data",
+   "label": "Group Chat ID",
+   "description": "Telegram group chat id (negative number, e.g. -100...). Transportation Request \"Documents requested\" messages are posted here, by the bot (Bot mode) or by the logged-in account (User Account mode, which must be a member of the group).",
+   "default": "-5524050749"
+  },
+  {
    "fieldname": "sec_bot",
    "fieldtype": "Section Break",
    "label": "Bot",
@@ -88,13 +95,6 @@
    "fieldtype": "Data",
    "label": "Bot Username",
    "read_only": 1
-  },
-  {
-   "fieldname": "group_chat_id",
-   "fieldtype": "Data",
-   "label": "Group Chat ID",
-   "description": "Telegram group chat id (negative number, e.g. -100...). Delivery Trip / Transportation Request details are also posted here. Bot mode only.",
-   "default": "-5524050749"
   },
   {
    "fieldname": "link_method",

@@ -1,12 +1,11 @@
 """Telegram message when a Transportation Request reaches "Documents requested".
 
-Every enabled user with the "Document" or "Trip Documents" role (the diesel / documents team that
-presses "Ready for start trip") gets one message, sent to the mobile number on their
-User (Mobile No, otherwise Phone), with:
+One message is posted to the Telegram group (Notification Hub > Group Chat ID) where the
+diesel / documents team that presses "Ready for start trip" is, with:
 - a link that opens the request in the supervisor dashboard,
 - Vehicle Internal Code, Driver Name, From and To.
 
-Sending, logging and the Activity timeline line are shared (telegram_connector/user_messages.py).
+Sending, logging and the Activity timeline line are shared (telegram_connector/driver_notifications.py).
 """
 
 from urllib.parse import quote
@@ -14,11 +13,11 @@ from urllib.parse import quote
 import frappe
 
 from telegram_connector import sender
-from telegram_connector.user_messages import CHANNEL, dashboard_link, send_to_users, site_url, users_with_role
+from telegram_connector.driver_notifications import _group_id, send_to_group
+from telegram_connector.user_messages import CHANNEL, dashboard_link, site_url
 
 DOCTYPE = "Transportation Request"
 STATE = "Documents requested"
-ROLES = ("Document", "Trip Documents")
 
 
 def on_update_after_submit(doc, method=None):
@@ -44,16 +43,16 @@ def on_update_after_submit(doc, method=None):
 
 def send_documents_request(name, sent_by=None, base_url=None):
 	doc = frappe.get_doc(DOCTYPE, name)
-	users = sorted({user for role in ROLES for user in users_with_role(role)})
-	if not users:
-		# Nobody to send to: say so on the request instead of failing silently.
+	group_id = _group_id()
+	if not group_id:
+		# Nowhere to send to: say so on the request instead of failing silently.
 		doc.add_comment(
 			"Info",
-			f"⚠️ <b>Documents request</b> not sent via <b>{CHANNEL}</b>: no enabled user has the "
-			f"{' or '.join(ROLES)} role.",
+			f"⚠️ <b>Documents request</b> not sent via <b>{CHANNEL}</b>: no Group Chat ID is set in "
+			"Notification Hub.",
 		)
 		return
-	send_to_users(doc, users, message(doc, base_url), "Documents request", sent_by)
+	send_to_group(DOCTYPE, name, group_id, message(doc, base_url), "Documents request", sent_by)
 
 
 def _vehicle_internal_code(doc):
