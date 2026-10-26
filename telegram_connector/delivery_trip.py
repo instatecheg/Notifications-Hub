@@ -13,7 +13,7 @@ from urllib.parse import quote
 import frappe
 
 from telegram_connector import sender
-from telegram_connector.user_messages import CHANNEL, dashboard_link, send_to_users, site_url, users_with_role
+from telegram_connector.user_messages import CHANNEL, app_link, send_to_users, site_url, users_with_role
 
 DOCTYPE = "Delivery Trip"
 SUPERVISOR_ROLE = "Supervisor"
@@ -81,7 +81,7 @@ def supervisors_for(doc):
 
 
 def trip_link(name, base_url=None):
-	return dashboard_link(f"tab=trips&trip={quote(name)}", base_url)
+	return app_link("trips", f"trip={quote(name)}", base_url)
 
 
 def _details(doc):

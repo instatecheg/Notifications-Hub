@@ -12,7 +12,7 @@ from frappe.utils import escape_html, get_url
 from telegram_connector import sender
 
 CHANNEL = "Telegram"
-DASHBOARD_PATH = "/assets/logistics_hub/supervisor_dashboard.html"
+APP_PATH = "/logistics"
 LOCAL_HOSTS = ("localhost", "127.0.0.1", "0.0.0.0", "::1")
 
 
@@ -32,9 +32,10 @@ def site_url():
 	return get_url().rstrip("/")
 
 
-def dashboard_link(query, base_url=None):
-	"""Supervisor dashboard link, e.g. dashboard_link("tab=trips&trip=MAT-DT-...")."""
-	return f"{(base_url or site_url()).rstrip('/')}{DASHBOARD_PATH}?{query}"
+def app_link(page, query=None, base_url=None):
+	"""Logistics app link on this site's domain, e.g. app_link("trips", "trip=MAT-DT-...")."""
+	url = f"{(base_url or site_url()).rstrip('/')}{APP_PATH}/{page}"
+	return f"{url}?{query}" if query else url
 
 
 def users_with_role(role):

@@ -2,19 +2,17 @@
 
 One message is posted to the Telegram group (Notification Hub > Group Chat ID) where the
 diesel / documents team that presses "Ready for start trip" is, with:
-- a link that opens the request in the supervisor dashboard,
+- a link to the requests page of the logistics app (/logistics/requests),
 - Vehicle Internal Code, Driver Name, From and To.
 
 Sending, logging and the Activity timeline line are shared (telegram_connector/driver_notifications.py).
 """
 
-from urllib.parse import quote
-
 import frappe
 
 from telegram_connector import sender
 from telegram_connector.driver_notifications import _group_id, send_to_group
-from telegram_connector.user_messages import CHANNEL, dashboard_link, site_url
+from telegram_connector.user_messages import CHANNEL, app_link, site_url
 
 DOCTYPE = "Transportation Request"
 STATE = "Documents requested"
@@ -65,8 +63,8 @@ def _vehicle_internal_code(doc):
 	return assignment
 
 
-def request_link(name, base_url=None):
-	return dashboard_link(f"tab=requests&request={quote(name)}", base_url)
+def request_link(base_url=None):
+	return app_link("requests", base_url=base_url)
 
 
 def message(doc, base_url=None):
@@ -77,5 +75,5 @@ def message(doc, base_url=None):
 		f"From: {doc.get('from') or '-'}",
 		f"To: {doc.get('to') or '-'}",
 		"",
-		f"Open the request: {request_link(doc.name, base_url)}",
+		f"Open the request: {request_link(base_url)}",
 	])
