@@ -16,7 +16,6 @@ _h = "telegram_connector.events.handle"
 _dt = "telegram_connector.driver_notifications.on_update"
 doc_events = {
     "*": {"after_insert": _h, "on_update": _h, "on_submit": _h, "on_cancel": _h},
-    # Send details / changes to the assigned Driver
     "Delivery Trip": {"on_update": _dt, "on_update_after_submit": _dt},
     "Transportation Request": {"on_update": _dt, "on_update_after_submit": _dt},
 }

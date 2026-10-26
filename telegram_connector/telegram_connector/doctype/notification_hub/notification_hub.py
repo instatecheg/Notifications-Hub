@@ -154,13 +154,29 @@ class NotificationHub(Document):
             return out()
         origin, path = m.group(1), m.group(2) or ""
 
+        def list_instances():
+            # Best effort: ask Wapilot for the account's instances so the right ID can be copied from here
+            if not token:
+                return
+            u = f"{origin}/api/v2/instances"
+            try:
+                rr = requests.get(u, headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=15)
+            except Exception as e:
+                warn(f"Could not list instances ({type(e).__name__}). Copy the instance ID from the Wapilot dashboard")
+                return
+            if rr.status_code == 200:
+                ok(f"Instances in your Wapilot account (copy the ID of the connected one into the Base URL): <code>{esc(rr.text[:800])}</code>")
+            else:
+                warn(f"Could not list instances (HTTP {rr.status_code}). Copy the instance ID from the Wapilot dashboard. Reply: {esc(rr.text[:200])}")
+
         # ---------------- API v2 ----------------
         if sender.wa_is_v2(self):
             ok("Mode: Wapilot API v2 (no SDK package needed)")
             try:
                 url, media = sender.wa_v2_urls(self)
             except frappe.ValidationError as e:
-                bad(esc(str(e)))
+                bad(esc(str(e)).replace("\n", "<br>"))
+                list_instances()
                 return out()
             ok(f"Send URL: {esc(url)}")
             ok(f"Media URL (PDF): {esc(media)}")
@@ -185,6 +201,7 @@ class NotificationHub(Document):
                 bad(f"The token was rejected. Generate a new one in the Wapilot dashboard. Reply: {reply}")
             elif r.status_code == 404:
                 bad(f"Not found: check the INSTANCE ID in the URL and that the number is connected in Wapilot. Reply: {reply}")
+                list_instances()
             elif r.status_code == 405:
                 bad(f"This URL does not accept POST. Use the full send URL ending with /send-message. Reply: {reply}")
             elif r.status_code in (400, 422):

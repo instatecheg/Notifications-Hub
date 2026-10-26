@@ -466,10 +466,14 @@ def wa_v2_urls(s=None):
     """Return (text_url, media_url). Raises a readable error if the instance id is missing."""
     s = s or settings()
     b = wa_base(s)
-    if not re.search(r"/api/v2/[^/]+", b):
+    m = re.search(r"/api/v2/([^/]+)", b)
+    # "instances" is the API's list path and "<INSTANCE_ID>" the docs placeholder: neither is a real instance id
+    if not m or m.group(1).lower() in ("instances", "instance", "send-message") or "<" in m.group(1) or "%3c" in m.group(1).lower():
         raise frappe.ValidationError(
-            "Wapilot Base URL for API v2 must contain your instance ID, e.g. "
-            "https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            "❌ Problem in: Wapilot Base URL (instance ID)\n"
+            "Cause and fix: The URL does not contain your real instance ID. Copy the instance ID from your Wapilot "
+            "dashboard and use: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            f"\nTechnical details: current Base URL is {b or '(empty)'}"
         )
     if b.endswith("/send-message"):
         text_url, root = b, b[: -len("/send-message")]

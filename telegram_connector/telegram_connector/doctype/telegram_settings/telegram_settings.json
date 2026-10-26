@@ -18,7 +18,7 @@
    "options": "Bot\nUser Account",
    "default": "Bot",
    "reqd": 1,
-   "description": "Bot = رسمي وآمن (العميل يضغط Start). User Account = إرسال برقم الموبايل بحساب شخصي (خطر حظر)."
+   "description": "Bot = official and safe (the customer presses Start). User Account = send by mobile number from a personal account (risk of being banned)."
   },
   {
    "fieldname": "default_country_code",
@@ -49,7 +49,7 @@
    "label": "Link Method",
    "options": "Polling\nWebhook",
    "default": "Polling",
-   "description": "Polling لا يحتاج رابط عام. Webhook يحتاج HTTPS عام."
+   "description": "Polling does not need a public URL. Webhook needs a public HTTPS URL."
   },
   {
    "fieldname": "btn_test_connection",
@@ -109,7 +109,7 @@
    "fieldname": "two_fa_password",
    "fieldtype": "Password",
    "label": "Two Fa Password",
-   "description": "لو الحساب عليه Two-Step Verification"
+   "description": "Only if the account has Two-Step Verification enabled"
   },
   {
    "fieldname": "btn_verify",
@@ -149,13 +149,13 @@
    "fieldname": "test_recipient",
    "fieldtype": "Data",
    "label": "Test Recipient",
-   "description": "Bot: chat id رقمي — Account: رقم موبايل"
+   "description": "Bot: numeric chat id. Account: mobile number"
   },
   {
    "fieldname": "test_text",
    "fieldtype": "Data",
    "label": "Test Text",
-   "default": "تجربة من ERPNext ✅"
+   "default": "Test message from ERPNext ✅"
   },
   {
    "fieldname": "btn_send_test",

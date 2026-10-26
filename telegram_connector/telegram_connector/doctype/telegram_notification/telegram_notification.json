@@ -41,7 +41,7 @@
    "fieldtype": "Code",
    "label": "Condition",
    "options": "PythonExpression",
-   "description": "اختياري. مثال: doc.grand_total > 100"
+   "description": "Optional. Example: doc.grand_total > 100"
   },
   {
    "fieldname": "sec_rec",
@@ -52,32 +52,32 @@
    "fieldname": "mobile_field",
    "fieldtype": "Data",
    "label": "Mobile Field",
-   "description": "حقل الموبايل في المستند، مثال: contact_mobile"
+   "description": "Mobile field in the document, e.g. contact_mobile"
   },
   {
    "fieldname": "party_field",
    "fieldtype": "Data",
    "label": "Party Field",
-   "description": "حقل الطرف في المستند، مثال: customer"
+   "description": "Party field in the document, e.g. customer"
   },
   {
    "fieldname": "party_doctype",
    "fieldtype": "Link",
    "label": "Party Doctype",
    "options": "DocType",
-   "description": "مثال: Customer"
+   "description": "Example: Customer"
   },
   {
    "fieldname": "party_mobile_field",
    "fieldtype": "Data",
    "label": "Party Mobile Field",
-   "description": "حقل الموبايل في الطرف، مثال: mobile_no"
+   "description": "Mobile field in the party, e.g. mobile_no"
   },
   {
    "fieldname": "prefer_party_mobile",
    "fieldtype": "Check",
    "label": "Prefer Party Mobile",
-   "description": "استخدم رقم الطرف قبل رقم المستند"
+   "description": "Use the party's number before the document's number"
   },
   {
    "fieldname": "sec_msg",
@@ -90,7 +90,7 @@
    "label": "Message",
    "options": "Jinja",
    "reqd": 1,
-   "description": "استخدم doc، مثال: {{ doc.name }}"
+   "description": "Use doc, e.g. {{ doc.name }}"
   },
   {
    "fieldname": "attach_print",

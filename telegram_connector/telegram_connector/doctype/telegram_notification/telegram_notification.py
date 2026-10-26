@@ -8,4 +8,4 @@ class TelegramNotification(Document):
         try:
             Environment().parse(self.message or "")
         except TemplateSyntaxError as e:
-            frappe.throw(f"خطأ في قالب الرسالة: {e}")
+            frappe.throw(f"Error in the message template: {e}")
