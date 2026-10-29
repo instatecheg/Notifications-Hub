@@ -156,7 +156,8 @@ function drop_if_empty(frm, table, cdn, key) {
 	if (row && !row[key]) frm.fields_dict[table].grid.grid_rows_by_docname[cdn]?.remove();
 }
 
-const TABLE_OF = { "Hub Notification": "notifications", "Hub User Alert": "user_alerts", "Hub Message Template": "templates" };
+const TABLE_OF = { "Hub Notification": "notifications", "Hub User Alert": "user_alerts", "Hub Message Template": "templates",
+	"Hub Group": "groups" };
 
 function save_row(frm, cdt, cdn, values) {
 	Object.entries(values).forEach(([k, v]) => (locals[cdt][cdn][k] = v));
@@ -170,16 +171,19 @@ function edit_notification(frm, cdn) {
 	const row = locals[cdt][cdn];
 	let filter_group = null;
 	let saved = false;
+	let ready = false; // ignore the onchange events fired while the stored values are loaded
+	let filters_token = 0;
+	let d = null;
 
-	const d = new frappe.ui.Dialog({
+	d = new frappe.ui.Dialog({
 		title: row.title || __("New Notification"),
 		size: "extra-large",
 		fields: [
 			{ fieldtype: "Section Break", label: __("When") },
 			{ fieldname: "document_type", fieldtype: "Link", options: "DocType", label: __("Document"), reqd: 1,
-				onchange: () => on_doctype(true) },
+				onchange: () => ready && on_doctype(true) },
 			{ fieldname: "event", fieldtype: "Select", options: EVENTS.join("\n"), label: __("Event"), reqd: 1,
-				onchange: () => on_event() },
+				onchange: () => ready && on_event() },
 			{ fieldname: "value_changed", fieldtype: "Autocomplete", label: __("Field that changes"),
 				depends_on: "eval:doc.event=='Value Change'", description: __("e.g. Status") },
 			{ fieldname: "date_changed", fieldtype: "Autocomplete", label: __("Reference Date"),
@@ -213,7 +217,8 @@ function edit_notification(frm, cdn) {
 					.map(g => ({ value: g.group_name, description: g.channel })) },
 			{ fieldname: "document_fields", fieldtype: "MultiSelectPills", label: __("People on the document"),
 				description: __("A field holding a user or a mobile number, e.g. Created By (owner)"),
-				get_data: () => get_fields(d.get_value("document_type")).then(fs => fs
+				// the control asks for data while the dialog is still being built
+				get_data: () => (d ? get_fields(d.get_value("document_type")) : Promise.resolve([])).then(fs => fs
 					.filter(f => ["Data", "Link", "Dynamic Link", "Phone"].includes(f.fieldtype))
 					.map(f => ({ value: f.value, description: f.label }))) },
 			{ fieldname: "mobile_numbers", fieldtype: "Small Text", label: __("Mobile Numbers"), description: __("One per line") },
@@ -258,6 +263,7 @@ function edit_notification(frm, cdn) {
 			if (!v.template && !(v.message || "").trim()) return notice(__("Message Required"), __("Please select a template or enter a message."));
 			const filters = filter_group ? filter_group.get_filters().map(f => f.slice(0, 4)) : [];
 			saved = true;
+			delete row.__draft;
 			d.hide();
 			save_row(frm, cdt, cdn, {
 				enabled: v.enabled ? 1 : 0, title: v.title || "", document_type: dt, event: v.event,
@@ -289,9 +295,11 @@ function edit_notification(frm, cdn) {
 	function make_filters(filters) {
 		const dt = d.get_value("document_type");
 		const area = d.fields_dict.filter_area.$wrapper.empty();
+		const token = ++filters_token;
 		filter_group = null;
 		if (!dt) return area.html(`<p class="text-muted">${__("Please select a document to define conditions.")}</p>`);
 		frappe.model.with_doctype(dt, () => {
+			if (token !== filters_token) return;
 			filter_group = new frappe.ui.FilterGroup({ parent: area, doctype: dt, on_change: () => {} });
 			if (filters && filters.length) filter_group.add_filters_to_filter_group(filters);
 		});
@@ -349,7 +357,12 @@ function edit_notification(frm, cdn) {
 		}, __("Save as Template"));
 	}
 
-	d.onhide = () => !saved && drop_if_empty(frm, "notifications", cdn, "document_type");
+	d.onhide = () => {
+		if (saved) return;
+		// a row started from a template or group is added to a saved form, so reloading discards it
+		if (row.__draft) frm.reload_doc();
+		else drop_if_empty(frm, "notifications", cdn, "document_type");
+	};
 	d.show();
 	const filters = JSON.parse(row.filters || "[]");
 	d.set_values({
@@ -365,9 +378,22 @@ function edit_notification(frm, cdn) {
 		on_doctype(false);
 		set_template_options();
 		d.set_values({ value_changed: row.value_changed, date_changed: row.date_changed, template: row.template || "" })
-			.then(show_template);
+			.then(() => {
+				show_template();
+				ready = true;
+			});
 		make_filters(filters);
 	});
+}
+
+// Start a notification from a template or a group row, with that template or group already selected
+function new_notification(frm, values) {
+	if (frm.is_new() || frm.is_dirty()) {
+		return notice(__("Save Required"), __("Please save the Notification Hub before adding a notification from this row."));
+	}
+	const row = frm.add_child("notifications", { enabled: 1, event: "Submit", __draft: 1, ...values });
+	frm.refresh_field("notifications");
+	edit_notification(frm, row.name);
 }
 
 function edit_user_alert(frm, cdn) {
@@ -489,7 +515,21 @@ function use_dialog(table, open) {
 
 frappe.ui.form.on("Hub Notification", use_dialog("notifications", edit_notification));
 frappe.ui.form.on("Hub User Alert", use_dialog("user_alerts", edit_user_alert));
-frappe.ui.form.on("Hub Message Template", use_dialog("templates", edit_template));
+frappe.ui.form.on("Hub Message Template", {
+	...use_dialog("templates", edit_template),
+	btn_new_notification(frm, cdt, cdn) {
+		const t = locals[cdt][cdn];
+		if (!t.template_name) return;
+		new_notification(frm, { template: t.template_name, document_type: t.document_type || "" });
+	},
+});
+frappe.ui.form.on("Hub Group", {
+	btn_new_notification(frm, cdt, cdn) {
+		const g = locals[cdt][cdn];
+		if (!g.group_name) return;
+		new_notification(frm, { chat_groups: g.group_name, channel: g.channel, send_to_contact: 0 });
+	},
+});
 
 frappe.ui.form.on("Notification Hub", {
 	btn_test_connection: f => run(f, "test_connection"),

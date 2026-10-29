@@ -115,6 +115,7 @@ class NotificationHub(Document):
         self.validate_templates()
         self.validate_notifications()
         self.validate_user_alerts()
+        self.set_used_in()
 
     def validate_groups(self):
         names = set()
@@ -186,6 +187,14 @@ class NotificationHub(Document):
             types = sender._lines(r.types)
             doctypes = sender._lines(r.document_types)
             r.summary = (", ".join(types) or "All notifications") + " / " + (", ".join(doctypes) or "all documents")
+
+    def set_used_in(self):
+        """Show on each template and group the notifications that use it."""
+        for t in self.templates:
+            t.used_in = ", ".join([r.title for r in self.notifications if r.template == t.template_name]
+                                  + [f"User Alert: {a.summary}" for a in self.user_alerts if a.template == t.template_name])
+        for g in self.groups:
+            g.used_in = ", ".join(r.title for r in self.notifications if g.group_name in sender._lines(r.chat_groups))
 
     @frappe.whitelist()
     def test_connection(self):

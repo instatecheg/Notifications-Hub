@@ -20,7 +20,7 @@
    "label": "Group Name",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 3
+   "columns": 2
   },
   {
    "fieldname": "channel",
@@ -30,7 +30,7 @@
    "default": "WhatsApp",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 2
+   "columns": 1
   },
   {
    "fieldname": "chat_id",
@@ -38,8 +38,24 @@
    "label": "Group Chat ID",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 4,
+   "columns": 2,
    "description": "WhatsApp: id ending with @g.us (WhatsApp Diagnostics lists them). Telegram: negative number, e.g. -1001234567890; the bot must be in the group."
+  },
+  {
+   "fieldname": "used_in",
+   "fieldtype": "Small Text",
+   "label": "Used In",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Notifications that use this"
+  },
+  {
+   "fieldname": "btn_new_notification",
+   "fieldtype": "Button",
+   "label": "Add Notification",
+   "in_list_view": 1,
+   "columns": 2
   }
  ],
  "permissions": []

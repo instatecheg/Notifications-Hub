@@ -12,7 +12,7 @@
    "label": "Template Name",
    "reqd": 1,
    "in_list_view": 1,
-   "columns": 3
+   "columns": 2
   },
   {
    "fieldname": "document_type",
@@ -29,9 +29,16 @@
    "label": "Message",
    "options": "Jinja",
    "reqd": 1,
-   "in_list_view": 1,
-   "columns": 4,
    "description": "Use {{ doc.fieldname }} for document values. Also: {{ changed_by }}, {{ old_value }}, {{ new_value }}, {{ field_label }}, {{ subject }} and {{ link }} (for user notifications)."
+  },
+  {
+   "fieldname": "used_in",
+   "fieldtype": "Small Text",
+   "label": "Used In",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 3,
+   "description": "Notifications that use this"
   },
   {
    "fieldname": "btn_edit",
@@ -39,6 +46,13 @@
    "label": "Edit",
    "in_list_view": 1,
    "columns": 1
+  },
+  {
+   "fieldname": "btn_new_notification",
+   "fieldtype": "Button",
+   "label": "Add Notification",
+   "in_list_view": 1,
+   "columns": 2
   }
  ],
  "permissions": []
