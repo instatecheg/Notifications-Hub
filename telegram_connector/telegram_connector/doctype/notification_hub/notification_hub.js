@@ -183,9 +183,10 @@ function edit_notification(frm, cdn) {
 				options: `<div class="alert alert-info" style="margin-bottom: 0">${__(
 					"This notification belongs to the group {0}. Its document, event, template and channel are set in the Groups tab; conditions and other recipients can be changed here.",
 					[`<b>${frappe.utils.escape_html(row.source_group || "")}</b>`])}</div>` },
-			{ fieldtype: "Section Break", label: __("When") },
+			{ fieldtype: "Section Break", label: __("1. When should it be sent?") },
 			{ fieldname: "document_type", fieldtype: "Link", options: "DocType", label: __("Document"), reqd: 1,
-				onchange: () => ready && on_doctype(true) },
+				description: __("e.g. Sales Invoice, Delivery Trip"), onchange: () => ready && on_doctype(true) },
+			{ fieldtype: "Column Break" },
 			{ fieldname: "event", fieldtype: "Select", options: EVENTS.join("\n"), label: __("Event"), reqd: 1,
 				onchange: () => ready && on_event() },
 			{ fieldname: "value_changed", fieldtype: "Autocomplete", label: __("Field that changes"),
@@ -194,39 +195,40 @@ function edit_notification(frm, cdn) {
 				depends_on: `eval:${JSON.stringify(DATE_EVENTS)}.includes(doc.event)`, description: __("Checked once a day") },
 			{ fieldname: "days_in_advance", fieldtype: "Int", label: __("Days"),
 				depends_on: `eval:${JSON.stringify(DATE_EVENTS)}.includes(doc.event)` },
-			{ fieldtype: "Column Break" },
-			{ fieldname: "channel", fieldtype: "Select", options: "WhatsApp\nTelegram\nBoth", label: __("Channel"), reqd: 1,
-				description: __("For people. Groups always use their own channel.") },
-			{ fieldname: "title", fieldtype: "Data", label: __("Title"), description: __("Leave empty to fill automatically") },
-			{ fieldname: "enabled", fieldtype: "Check", label: __("Enabled") },
 
-			{ fieldtype: "Section Break", label: __("Conditions"),
-				description: __("Send only when all conditions are true. Leave empty to always send.") },
-			{ fieldname: "filter_area", fieldtype: "HTML" },
-			{ fieldtype: "Section Break", label: __("Advanced Condition (Python)"), collapsible: 1,
-				collapsible_depends_on: "condition" },
-			{ fieldname: "condition", fieldtype: "Code", options: "PythonExpression", label: __("Python Condition"),
-				description: __("Optional, for developers. Example: doc.grand_total > 1000") },
-
-			{ fieldtype: "Section Break", label: __("Send To") },
-			{ fieldname: "send_to_contact", fieldtype: "Check", label: __("The document's customer / contact") },
-			{ fieldname: "users", fieldtype: "MultiSelectPills", label: __("Users"),
-				get_data: txt => frappe.db.get_link_options("User", txt, { enabled: 1, user_type: "System User" }) },
-			{ fieldname: "roles", fieldtype: "MultiSelectPills", label: __("Roles"),
-				get_data: txt => frappe.db.get_link_options("Role", txt) },
+			{ fieldtype: "Section Break", label: __("2. Who should receive it?"),
+				description: __("Select one or more recipients.") },
+			{ fieldname: "send_to_contact", fieldtype: "Check", label: __("The customer / contact on the document"),
+				onchange: () => show_recipients() },
+			{ fieldname: "users", fieldtype: "MultiSelectList", label: __("Users"), placeholder: __("Select users"),
+				get_data: txt => frappe.db.get_link_options("User", txt, { enabled: 1, user_type: "System User" }),
+				onchange: () => show_recipients() },
+			{ fieldname: "roles", fieldtype: "MultiSelectList", label: __("Roles"), placeholder: __("Select roles"),
+				description: __("Every user with the role"),
+				get_data: txt => frappe.db.get_link_options("Role", txt), onchange: () => show_recipients() },
 			{ fieldtype: "Column Break" },
-			{ fieldname: "chat_groups", fieldtype: "MultiSelectPills", label: __("Groups"),
-				description: __("Add groups in the Groups tab"),
+			{ fieldname: "chat_groups", fieldtype: "MultiSelectList", label: __("Groups"), placeholder: __("Select groups"),
+				description: __("Groups are added in the Groups tab"),
 				get_data: () => (frm.doc.groups || []).filter(g => g.enabled)
-					.map(g => ({ value: g.group_name, description: g.channel })) },
-			{ fieldname: "document_fields", fieldtype: "MultiSelectPills", label: __("People on the document"),
-				description: __("A field holding a user or a mobile number, e.g. Created By (owner)"),
+					.map(g => ({ value: g.group_name, description: g.channel })),
+				onchange: () => show_recipients() },
+			{ fieldname: "channel", fieldtype: "Select", options: "WhatsApp\nTelegram\nBoth", label: __("Send to people via"), reqd: 1,
+				description: __("Groups always use their own channel.") },
+			{ fieldtype: "Section Break" },
+			{ fieldname: "recipients_text", fieldtype: "HTML" },
+			{ fieldtype: "Section Break", label: __("More recipients"), collapsible: 1,
+				collapsible_depends_on: "eval:doc.document_fields && doc.document_fields.length || doc.mobile_numbers" },
+			{ fieldname: "document_fields", fieldtype: "MultiSelectList", label: __("People on the document"),
+				placeholder: __("Select fields"), description: __("A field holding a user or a mobile number, e.g. Created By"),
 				// the control asks for data while the dialog is still being built
 				get_data: () => (d ? get_fields(d.get_value("document_type")) : Promise.resolve([])).then(fs => fs
 					.filter(f => ["Data", "Link", "Dynamic Link", "Phone"].includes(f.fieldtype))
-					.map(f => ({ value: f.value, description: f.label }))) },
-			{ fieldname: "mobile_numbers", fieldtype: "Small Text", label: __("Mobile Numbers"), description: __("One per line") },
-			{ fieldtype: "Section Break", label: __("Customer / Contact Fields"), collapsible: 1, depends_on: "send_to_contact",
+					.map(f => ({ value: f.value, label: f.label, description: f.value }))),
+				onchange: () => show_recipients() },
+			{ fieldtype: "Column Break" },
+			{ fieldname: "mobile_numbers", fieldtype: "Small Text", label: __("Mobile Numbers"), description: __("One per line"),
+				onchange: () => show_recipients() },
+			{ fieldtype: "Section Break", label: __("Customer / contact mobile"), collapsible: 1, depends_on: "send_to_contact",
 				description: __("Filled automatically from the document. Change only if the mobile number is stored elsewhere.") },
 			{ fieldname: "mobile_field", fieldtype: "Autocomplete", label: __("Mobile field in the document") },
 			{ fieldname: "party_field", fieldtype: "Autocomplete", label: __("Customer / party field") },
@@ -235,29 +237,30 @@ function edit_notification(frm, cdn) {
 			{ fieldname: "party_mobile_field", fieldtype: "Data", label: __("Mobile field in the party"), description: __("e.g. mobile_no") },
 			{ fieldname: "prefer_party_mobile", fieldtype: "Check", label: __("Use the party's number first") },
 
-			{ fieldtype: "Section Break", label: __("Message") },
+			{ fieldtype: "Section Break", label: __("3. What should the message say?") },
 			{ fieldname: "template", fieldtype: "Select", label: __("Template"),
-				description: __("Pick a saved template, or leave empty and write the message"),
+				description: __("Select a template from the Templates tab, or leave empty and write the message below."),
 				onchange: () => show_template() },
 			{ fieldname: "template_text", fieldtype: "HTML", depends_on: "template" },
 			{ fieldname: "message", fieldtype: "Code", options: "Jinja", label: __("Message"), depends_on: "eval:!doc.template" },
-			{ fieldname: "btn_insert", fieldtype: "Button", label: __("Insert Field"), depends_on: "eval:!doc.template",
-				click: () => insert_field(d.get_value("document_type"), () => d.get_value("message"), v => d.set_value("message", v)) },
-			{ fieldtype: "Column Break" },
-			{ fieldname: "btn_preview", fieldtype: "Button", label: __("Preview"),
-				click: () => preview(d.get_value("document_type"),
-					d.get_value("template") ? template_text(frm, d.get_value("template")) : d.get_value("message")) },
-			{ fieldtype: "Column Break" },
-			{ fieldname: "btn_default", fieldtype: "Button", label: __("Load Default Message"), depends_on: "eval:!doc.template",
-				click: () => load_preset(true) },
-			{ fieldtype: "Column Break" },
-			{ fieldname: "btn_save_template", fieldtype: "Button", label: __("Save as Template"), depends_on: "eval:!doc.template",
-				click: () => save_as_template() },
-			{ fieldtype: "Section Break" },
-			{ fieldname: "attach_print", fieldtype: "Check", label: __("Attach PDF") },
+			{ fieldname: "message_tools", fieldtype: "HTML" },
+			{ fieldname: "attach_print", fieldtype: "Check", label: __("Attach the document as PDF") },
 			{ fieldtype: "Column Break" },
 			{ fieldname: "print_format", fieldtype: "Link", options: "Print Format", label: __("Print Format"), depends_on: "attach_print",
 				get_query: () => ({ filters: { doc_type: d.get_value("document_type") } }) },
+
+			{ fieldtype: "Section Break", label: __("Conditions (optional)"), collapsible: 1,
+				description: __("Send only when all conditions are true. Leave empty to always send.") },
+			{ fieldname: "filter_area", fieldtype: "HTML" },
+			{ fieldtype: "Section Break", label: __("Advanced condition (for developers)"), collapsible: 1,
+				collapsible_depends_on: "condition" },
+			{ fieldname: "condition", fieldtype: "Code", options: "PythonExpression", label: __("Python Condition"), max_height: "120px",
+				description: __("Example: doc.grand_total > 1000") },
+
+			{ fieldtype: "Section Break", label: __("Settings"), collapsible: 1 },
+			{ fieldname: "title", fieldtype: "Data", label: __("Title"), description: __("Leave empty to fill automatically") },
+			{ fieldtype: "Column Break" },
+			{ fieldname: "enabled", fieldtype: "Check", label: __("Enabled") },
 		],
 		primary_action_label: __("Save"),
 		primary_action(v) {
@@ -284,8 +287,40 @@ function edit_notification(frm, cdn) {
 		},
 	});
 
+	function message_tools() {
+		const tools = [
+			["insert", __("Insert Field"), true, () => insert_field(d.get_value("document_type"), () => d.get_value("message"), v => d.set_value("message", v))],
+			["preview", __("Preview"), false, () => preview(d.get_value("document_type"),
+				d.get_value("template") ? template_text(frm, d.get_value("template")) : d.get_value("message"))],
+			["default", __("Load Default Message"), true, () => load_preset(true)],
+			["save", __("Save as Template"), true, () => save_as_template()],
+		];
+		const $w = d.fields_dict.message_tools.$wrapper.empty().css("margin-bottom", "var(--margin-md)");
+		const custom = !d.get_value("template");
+		tools.filter(([, , custom_only]) => custom || !custom_only).forEach(([key, label, , click]) =>
+			$(`<button class="btn btn-default btn-xs" style="margin-right: 6px">${label}</button>`).on("click", click).appendTo($w));
+	}
+
+	function show_recipients() {
+		if (!d) return;
+		const v = d.get_values(true) || {};
+		const list = (label, values) => (values && values.length ? `${label}: <b>${values.map(x => frappe.utils.escape_html(x)).join(", ")}</b>` : "");
+		const parts = [
+			v.send_to_contact ? __("The customer / contact") : "",
+			list(__("Users"), v.users),
+			list(__("Roles"), v.roles),
+			list(__("Groups"), v.chat_groups),
+			list(__("People on the document"), v.document_fields),
+			list(__("Mobile numbers"), lines(v.mobile_numbers)),
+		].filter(Boolean);
+		d.fields_dict.recipients_text.$wrapper.html(parts.length
+			? `<div class="text-muted small">${__("This notification will be sent to:")} ${parts.join(" &middot; ")}</div>`
+			: `<div class="text-danger small">${__("No recipients selected yet.")}</div>`);
+	}
+
 	function show_template() {
 		const name = d.get_value("template");
+		if (d.fields_dict.message_tools) message_tools();
 		d.fields_dict.template_text.$wrapper.html(name
 			? `<pre style="white-space: pre-wrap; font-family: inherit; background: var(--control-bg); padding: 8px 10px; border-radius: 6px;">${
 				frappe.utils.escape_html(template_text(frm, name))}</pre>`
@@ -384,9 +419,11 @@ function edit_notification(frm, cdn) {
 		d.set_values({ value_changed: row.value_changed, date_changed: row.date_changed, template: row.template || "" })
 			.then(() => {
 				show_template();
+				show_recipients();
 				ready = true;
 			});
 		make_filters(filters);
+		if (filters.length || row.condition) d.fields_dict.filter_area.section?.collapse(false);
 	});
 }
 
