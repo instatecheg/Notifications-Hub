@@ -179,6 +179,10 @@ function edit_notification(frm, cdn) {
 		title: row.title || __("New Notification"),
 		size: "extra-large",
 		fields: [
+			{ fieldname: "group_note", fieldtype: "HTML", hidden: !row.source_group,
+				options: `<div class="alert alert-info" style="margin-bottom: 0">${__(
+					"This notification belongs to the group {0}. Its document, event, template and channel are set in the Groups tab; conditions and other recipients can be changed here.",
+					[`<b>${frappe.utils.escape_html(row.source_group || "")}</b>`])}</div>` },
 			{ fieldtype: "Section Break", label: __("When") },
 			{ fieldname: "document_type", fieldtype: "Link", options: "DocType", label: __("Document"), reqd: 1,
 				onchange: () => ready && on_doctype(true) },
@@ -523,15 +527,23 @@ frappe.ui.form.on("Hub Message Template", {
 		new_notification(frm, { template: t.template_name, document_type: t.document_type || "" });
 	},
 });
+// The group's Template list is the Templates tab
+function set_group_templates(frm) {
+	frm.fields_dict.groups.grid.update_docfield_property("template", "options", [""].concat(template_names(frm)));
+	frm.refresh_field("groups");
+}
+
 frappe.ui.form.on("Hub Group", {
-	btn_new_notification(frm, cdt, cdn) {
+	template(frm, cdt, cdn) {
 		const g = locals[cdt][cdn];
-		if (!g.group_name) return;
-		new_notification(frm, { chat_groups: g.group_name, channel: g.channel, send_to_contact: 0 });
+		const t = (frm.doc.templates || []).find(t => t.template_name === g.template);
+		if (t && t.document_type) frappe.model.set_value(cdt, cdn, "document_type", t.document_type);
+		if (g.template && !g.event) frappe.model.set_value(cdt, cdn, "event", "Submit");
 	},
 });
 
 frappe.ui.form.on("Notification Hub", {
+	refresh: set_group_templates,
 	btn_test_connection: f => run(f, "test_connection"),
 	btn_set_webhook: f => run(f, "set_webhook"),
 	btn_send_code: f => run(f, "send_login_code"),

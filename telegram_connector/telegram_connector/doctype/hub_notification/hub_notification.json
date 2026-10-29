@@ -191,6 +191,13 @@
    "label": "Print Format",
    "options": "Print Format",
    "hidden": 1
+  },
+  {
+   "fieldname": "source_group",
+   "fieldtype": "Data",
+   "label": "Created From Group",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "permissions": []

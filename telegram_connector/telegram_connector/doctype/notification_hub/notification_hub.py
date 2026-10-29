@@ -113,6 +113,7 @@ class NotificationHub(Document):
                 self.set(f, "*" * 10)
         self.validate_groups()
         self.validate_templates()
+        self.sync_group_notifications()
         self.validate_notifications()
         self.validate_user_alerts()
         self.set_used_in()
@@ -138,6 +139,46 @@ class NotificationHub(Document):
                 frappe.throw(f"Templates, row {t.idx}: the name {esc(t.template_name)} is already in use. Please choose a unique name.", title="Invalid Configuration")
             names.add(t.template_name)
             _check_jinja(t.message, f"Templates, row {t.idx} ({esc(t.template_name)})")
+
+    def sync_group_notifications(self):
+        """Keep one notification per group that has a document, an event and a template."""
+        templates = {t.template_name: t for t in self.templates}
+        wanted = {}
+        for g in self.groups:
+            if not (g.document_type or g.event or g.template):
+                continue
+            where = f"Groups, row {g.idx} ({esc(g.group_name)})"
+            t = templates.get(g.template)
+            if not t:
+                frappe.throw(f"{where}: please select a template from the Templates tab.", title="Invalid Configuration")
+            g.document_type = g.document_type or t.document_type
+            if not g.document_type or not g.event:
+                frappe.throw(f"{where}: please select both the document and the event.", title="Invalid Configuration")
+            if t.document_type and t.document_type != g.document_type:
+                frappe.throw(f"{where}: the template {esc(t.template_name)} is for {esc(t.document_type)}, "
+                             f"not {esc(g.document_type)}.", title="Invalid Configuration")
+            wanted[g.group_name] = g
+
+        rows = []
+        for r in self.notifications:
+            if r.source_group and r.source_group not in wanted:
+                continue  # the group no longer sends a template
+            rows.append(r)
+        self.notifications = rows
+        existing = {r.source_group: r for r in rows if r.source_group}
+        for name, g in wanted.items():
+            r = existing.get(name) or self.append("notifications", {"source_group": name, "send_to_contact": 0})
+            if r.document_type != g.document_type or r.event != g.event:
+                r.title = ""  # refilled with the new document and event
+            r.update({"document_type": g.document_type, "event": g.event, "template": g.template,
+                      "channel": g.channel, "enabled": g.enabled})
+            groups = sender._lines(r.chat_groups)
+            if name not in groups:
+                r.chat_groups = "\n".join(groups + [name])
+            if not r.title:
+                r.title = f"{name}: {g.document_type} - {g.event}"
+        for i, r in enumerate(self.notifications, 1):
+            r.idx = i
 
     def validate_notifications(self):
         templates = {t.template_name for t in self.templates}
