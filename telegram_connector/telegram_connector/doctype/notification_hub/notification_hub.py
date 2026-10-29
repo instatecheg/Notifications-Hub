@@ -1,3 +1,5 @@
+import re
+
 import frappe
 from frappe.model.document import Document
 from frappe.utils.password import set_encrypted_password
@@ -46,12 +48,118 @@ def _set_secret(field, value):
     _set(field, "*" * 10)
 
 
+STD_FIELDS = {"name", "owner", "modified_by", "docstatus", "creation", "modified", "idx"}
+
+
+def _check_field(meta, fieldname, where):
+    if not fieldname:
+        frappe.throw(f"{where}: choose a field")
+    if fieldname not in STD_FIELDS and not meta.has_field(fieldname):
+        frappe.throw(f"{where}: {meta.name} has no field '{fieldname}'")
+
+
+def _check_jinja(text, where):
+    from jinja2 import Environment, TemplateSyntaxError
+
+    try:
+        Environment().parse(text or "")
+    except TemplateSyntaxError as e:
+        frappe.throw(f"{where}: error in the message: {e}")
+
+
+def _send_to_summary(r):
+    parts = []
+    if r.send_to_contact:
+        parts.append("Customer")
+    for label, field in (("User", "users"), ("Role", "roles"), ("Number", "mobile_numbers"),
+                         ("Field", "document_fields"), ("Group", "chat_groups")):
+        items = sender._lines(r.get(field))
+        if items:
+            parts.append(f"{label}: " + ", ".join(items[:2]) + (f" +{len(items) - 2}" if len(items) > 2 else ""))
+    return "; ".join(parts)[:140]
+
+
 class NotificationHub(Document):
     def validate(self):
         # Never let a form save wipe a stored secret (see _set_secret)
         for f in SECRET_FIELDS:
             if not self.get(f) and self.get_password(f, raise_exception=False):
                 self.set(f, "*" * 10)
+        self.validate_groups()
+        self.validate_templates()
+        self.validate_notifications()
+        self.validate_user_alerts()
+
+    def validate_groups(self):
+        names = set()
+        for g in self.groups:
+            g.chat_id = (g.chat_id or "").strip()
+            where = f"Groups row {g.idx} ({g.group_name})"
+            if g.group_name in names:
+                frappe.throw(f"{where}: the group name is used twice")
+            names.add(g.group_name)
+            if g.channel == "WhatsApp" and not g.chat_id.endswith("@g.us"):
+                frappe.throw(f"{where}: a WhatsApp group id ends with @g.us, e.g. 120363012345678901@g.us. "
+                             "WhatsApp Diagnostics lists your groups.")
+            if g.channel == "Telegram" and not re.fullmatch(r"-\d+|@\w{4,}", g.chat_id):
+                frappe.throw(f"{where}: a Telegram group chat id is a negative number, e.g. -1001234567890")
+
+    def validate_templates(self):
+        names = set()
+        for t in self.templates:
+            if t.template_name in names:
+                frappe.throw(f"Templates row {t.idx}: the name {t.template_name} is used twice")
+            names.add(t.template_name)
+            _check_jinja(t.message, f"Templates row {t.idx} ({t.template_name})")
+
+    def validate_notifications(self):
+        templates = {t.template_name for t in self.templates}
+        groups = {g.group_name for g in self.groups}
+        titles = set()
+        for r in self.notifications:
+            if not r.title:
+                r.title = f"{r.document_type} - {r.event}" + (f" ({r.value_changed})" if r.event == "Value Change" else "")
+            base, n = r.title, 1
+            while r.title in titles:
+                n += 1
+                r.title = f"{base} ({n})"
+            titles.add(r.title)
+            where = f"Notification {r.idx} ({r.title})"
+            if self.flags.skip_rule_checks:
+                r.send_to = _send_to_summary(r)
+                continue
+            meta = frappe.get_meta(r.document_type)
+            if r.event == "Value Change":
+                _check_field(meta, r.value_changed, f"{where}: Value Changed")
+            if r.event in ("Days Before", "Days After"):
+                _check_field(meta, r.date_changed, f"{where}: Reference Date")
+                df = meta.get_field(r.date_changed)
+                if df and df.fieldtype not in ("Date", "Datetime"):
+                    frappe.throw(f"{where}: Reference Date '{r.date_changed}' is not a date field")
+            for f in sender.rule_filters(r):
+                _check_field(meta, f[1], f"{where}: Conditions")
+            for f in sender._lines(r.document_fields):
+                _check_field(meta, f, f"{where}: Document Fields")
+            missing = set(sender._lines(r.chat_groups)) - groups
+            if missing:
+                frappe.throw(f"{where}: unknown group(s) {', '.join(missing)}. Add them in the Groups tab")
+            if r.template and r.template not in templates:
+                frappe.throw(f"{where}: template '{r.template}' does not exist in the Templates tab")
+            if not r.template and not (r.message or "").strip():
+                frappe.throw(f"{where}: choose a Template or write a Message")
+            _check_jinja(r.message, where)
+            r.send_to = _send_to_summary(r)
+            if not r.send_to:
+                frappe.throw(f"{where}: choose at least one recipient")
+
+    def validate_user_alerts(self):
+        templates = {t.template_name for t in self.templates}
+        for r in self.user_alerts:
+            if r.template and r.template not in templates:
+                frappe.throw(f"User Alerts row {r.idx}: template '{r.template}' does not exist in the Templates tab")
+            types = sender._lines(r.types)
+            doctypes = sender._lines(r.document_types)
+            r.summary = (", ".join(types) or "All notifications") + " / " + (", ".join(doctypes) or "all documents")
 
     @frappe.whitelist()
     def test_connection(self):
@@ -239,7 +347,7 @@ class NotificationHub(Document):
                 warn("No common media endpoint was found. Check the Wapilot API documentation (send file / document) for the exact URL")
 
             # ---- WhatsApp groups (read only) ----
-            rows.append("<b>WhatsApp groups</b> (copy a group id ending with @g.us into Hub Chat Group):")
+            rows.append("<b>WhatsApp groups</b> (copy a group id ending with @g.us into the Groups tab):")
             listed = False
             for name in ("groups", "get-groups", "chats"):
                 try:

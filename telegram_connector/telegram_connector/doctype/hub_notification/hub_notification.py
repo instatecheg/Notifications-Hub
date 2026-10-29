@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class HubRuleCondition(Document):
+class HubNotification(Document):
     pass

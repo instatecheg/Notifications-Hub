@@ -334,29 +334,61 @@ def poll_updates():
 
 
 # ---------------- Notifications ----------------
+# A notification is a row of Notification Hub > Notifications (child doctype Hub Notification).
+def _lines(text):
+    return [x.strip() for x in (text or "").splitlines() if x.strip()]
+
+
+def get_notification(name):
+    """Hub Notification row by its row name."""
+    for row in settings().notifications:
+        if row.name == name:
+            return row
+    return None
+
+
+def get_template(name, s=None):
+    s = s or settings()
+    for t in s.templates:
+        if t.template_name == name:
+            return t.message
+    return None
+
+
+def rule_message(rule, s=None):
+    """The notification's chosen template, or its own message."""
+    return (rule.get("template") and get_template(rule.template, s)) or rule.get("message") or ""
+
+
+def rule_filters(rule):
+    import json
+
+    try:
+        return json.loads(rule.get("filters") or "[]") or []
+    except ValueError:
+        return []
+
+
 def rule_matches(rule, doc):
-    """True when every row of the Conditions table and the optional Python condition hold."""
+    """True when every condition (filter rows) and the optional Python condition hold."""
     meta = frappe.get_meta(doc.doctype)
-    for c in rule.get("conditions") or []:
-        if not _condition_holds(doc, meta, c):
+    for f in rule_filters(rule):
+        # filter rows from the UI: [doctype, fieldname, operator, value, ...]
+        if not _condition_holds(doc, meta, f[1], f[2], f[3] if len(f) > 3 else None):
             return False
     if rule.get("condition"):
         return bool(frappe.safe_eval(rule.condition, None, {"doc": doc}))
     return True
 
 
-def _condition_holds(doc, meta, c):
+def _condition_holds(doc, meta, fieldname, op, want):
     from frappe.utils import compare
 
-    op, actual, want = c.operator or "=", doc.get(c.fieldname), (c.value or "").strip()
-    df = meta.get_field(c.fieldname)
+    actual = doc.get(fieldname)
+    df = meta.get_field(fieldname)
     fieldtype = df.fieldtype if df else _guess_fieldtype(actual)
-    if op in ("is set", "is not set"):
-        return compare(actual, "is", op.split()[-1] if op == "is set" else "not set")
-    if op in ("in", "not in"):
-        return compare(actual, op, [v.strip() for v in want.split(",")], fieldtype)
-    if op in ("like", "not like") and "%" not in want:
-        want = f"%{want}%"
+    if op in ("in", "not in") and isinstance(want, str):
+        want = [v.strip() for v in want.split(",")]
     return compare(actual, op, want, fieldtype)
 
 
@@ -375,7 +407,7 @@ def _guess_fieldtype(value):
 
 
 def template_context(doc, extra=None):
-    """Values available in a rule's message besides doc."""
+    """Values available in a message besides doc."""
     extra = extra or {}
     user = extra.get("changed_by") or frappe.session.user
     return {
@@ -385,18 +417,20 @@ def template_context(doc, extra=None):
         "old_value": extra.get("old_value", ""),
         "new_value": extra.get("new_value", ""),
         "field_label": extra.get("field_label", ""),
+        "subject": extra.get("subject", ""),
+        "link": extra.get("link") or (frappe.utils.get_url_to_form(doc.doctype, doc.name) if doc else ""),
     }
 
 
 def _contact_target(rule, doc):
-    """The customer / party of the document (the original recipient of a rule)."""
-    party_type = rule.party_doctype
-    party = doc.get(rule.party_field) if rule.party_field else None
-    p_doc = doc.get(rule.mobile_field) if rule.mobile_field else None
+    """The customer / party of the document."""
+    party_type = rule.get("party_doctype")
+    party = doc.get(rule.party_field) if rule.get("party_field") else None
+    p_doc = doc.get(rule.mobile_field) if rule.get("mobile_field") else None
     p_party = None
-    if party_type and party and rule.party_mobile_field:
+    if party_type and party and rule.get("party_mobile_field"):
         p_party = frappe.db.get_value(party_type, party, rule.party_mobile_field)
-    phone = (p_party or p_doc) if rule.prefer_party_mobile else (p_doc or p_party)
+    phone = (p_party or p_doc) if rule.get("prefer_party_mobile") else (p_doc or p_party)
     return {"party_type": party_type if party else None, "party": party, "mobile_no": phone}
 
 
@@ -404,116 +438,187 @@ def _user_target(user):
     return {"party_type": "User", "party": user, "mobile_no": frappe.db.get_value("User", user, "mobile_no")}
 
 
-def _recipient_targets(row, doc):
-    t = row.recipient_type
-    if t == "User" and row.user:
-        return [_user_target(row.user)]
-    if t == "Role" and row.role:
-        users = frappe.get_all("Has Role", filters={"role": row.role, "parenttype": "User"}, pluck="parent")
-        users = frappe.get_all("User", filters={"name": ("in", users), "enabled": 1, "user_type": "System User"},
-                               pluck="name") if users else []
-        return [_user_target(u) for u in users if u not in ("Administrator", "Guest")]
-    if t == "Mobile Number" and row.mobile_no:
-        return [{"party_type": None, "party": None, "mobile_no": row.mobile_no}]
-    if t == "Document Field" and row.document_field:
-        v = doc.get(row.document_field)
+def role_users(role):
+    users = frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent")
+    if not users:
+        return []
+    return [u for u in frappe.get_all("User", filters={"name": ("in", users), "enabled": 1, "user_type": "System User"},
+                                      pluck="name") if u not in ("Administrator", "Guest")]
+
+
+def _people(rule, doc, contact_only=False):
+    people = []
+    # the built-in preset (Notify Customer without a configured row) has no send_to_contact: it sends to the contact
+    if rule.get("send_to_contact") in (None, 1) or contact_only:
+        people.append(_contact_target(rule, doc))
+    if contact_only:
+        return people
+    people += [_user_target(u) for u in _lines(rule.get("users"))]
+    for role in _lines(rule.get("roles")):
+        people += [_user_target(u) for u in role_users(role)]
+    people += [{"party_type": None, "party": None, "mobile_no": m} for m in _lines(rule.get("mobile_numbers"))]
+    for f in _lines(rule.get("document_fields")):
+        v = doc.get(f)
         if not v:
-            return []
+            continue
         if frappe.db.exists("User", v):
-            return [_user_target(v)]
-        return [{"party_type": None, "party": None, "mobile_no": v}]
-    return []
+            people.append(_user_target(v))
+        else:
+            people.append({"party_type": None, "party": None, "mobile_no": v})
+    return people
+
+
+def _group_targets(names, s=None):
+    s = s or settings()
+    wanted = set(names)
+    return [{"channel": g.channel, "chat_id": g.chat_id.strip(), "party_type": None, "party": None, "mobile_no": ""}
+            for g in s.groups if g.group_name in wanted and g.enabled and channel_enabled(g.channel, s)]
+
+
+def send_to_targets(targets, message, ref_doctype, ref_name, notification=None, attach_print=0,
+                    print_format=None, notify=True):
+    """One Hub Message Log per target, delivered right away. Duplicate targets are skipped."""
+    cc = settings().default_country_code
+    names, seen = [], set()
+    for t in targets:
+        mobile = normalize_phone(t.get("mobile_no"), cc) if not t.get("chat_id") else ""
+        if t.get("chat_id"):
+            key = (t["channel"], t["chat_id"])
+        elif t.get("party"):
+            key = (t["channel"], t["party_type"], t["party"])
+        else:
+            key = (t["channel"], mobile)
+        if key in seen:
+            continue
+        seen.add(key)
+        log = frappe.get_doc({
+            "doctype": "Hub Message Log", "notification": notification, "status": "Queued", "channel": t["channel"],
+            "reference_doctype": ref_doctype, "reference_name": ref_name,
+            "party_type": t.get("party_type"), "party": t.get("party"),
+            "mobile_no": mobile, "chat_id": t.get("chat_id"), "message": message,
+            "attach_print": attach_print, "print_format": print_format,
+        }).insert(ignore_permissions=True)
+        frappe.db.commit()
+        deliver(log.name, notify=notify)
+        names.append(log.name)
+    return names
 
 
 def process_rule(rule, ref_doctype, ref_name, force=False, channels=None, extra=None, contact_only=False):
-    """Create + deliver the message(s) for a rule. Returns the list of Hub Message Log names.
+    """Create + deliver the message(s) of a notification. Returns the list of Hub Message Log names.
 
+    rule: a Hub Notification row, its row name, or a preset dict.
     force=True: manual send (ignores the conditions and raises if no channel is enabled).
-    channels: limit to specific channels (e.g. ["WhatsApp"]); default = the rule's channel(s).
+    channels: limit to specific channels (e.g. ["WhatsApp"]); default = the notification's channel(s).
     extra: event details for the message (changed_by, old_value, new_value, field_label).
     contact_only: send only to the document's customer / contact (Notify Customer button).
     """
+    s = settings()
     if isinstance(rule, str):
-        rule = frappe.get_doc("Hub Notification Rule", rule)
+        rule = get_notification(rule)
+        if not rule:
+            return []
     doc = frappe.get_doc(ref_doctype, ref_name)
     if not force:
         try:
             if not rule_matches(rule, doc):
                 return []
         except Exception:
-            frappe.log_error(title="Notification Hub: bad condition", message=f"{rule.name}\n{frappe.get_traceback()}")
+            frappe.log_error(title="Notification Hub: bad condition",
+                             message=f"{rule.get('title')}\n{frappe.get_traceback()}")
             return []
-    active = [c for c in (channels or rule_channels(rule)) if channel_enabled(c)]
-    if not active and not (rule.get("groups") and not contact_only):
+    active = [c for c in (channels or rule_channels(rule)) if channel_enabled(c, s)]
+    groups = [] if contact_only else _group_targets(_lines(rule.get("chat_groups")), s)
+    if not active and not groups:
         if force:
             frappe.throw("The selected channel is not enabled in Notification Hub")
         return []
-    cc = settings().default_country_code
-    message = frappe.render_template(rule.message, template_context(doc, extra))
-
-    people = []
-    # a rule saved before "send_to_document_contact" existed, or the built-in preset, sends to the contact
-    if rule.get("send_to_document_contact") in (None, 1) or contact_only:
-        people.append(_contact_target(rule, doc))
-    if not contact_only:
-        for row in rule.get("recipients") or []:
-            people.extend(_recipient_targets(row, doc))
-
-    targets, seen = [], set()
-    for ch in active:
-        for p in people:
-            p = dict(p, mobile_no=normalize_phone(p["mobile_no"], cc))
-            key = (ch, p["party_type"], p["party"]) if p["party"] else (ch, p["mobile_no"])
-            if key not in seen:
-                seen.add(key)
-                targets.append(dict(p, channel=ch, chat_id=None))
-    if not contact_only:
-        for g in rule.get("groups") or []:
-            grp = frappe.db.get_value("Hub Chat Group", g.group, ["channel", "chat_id", "enabled"], as_dict=True)
-            if grp and grp.enabled and channel_enabled(grp.channel) and (grp.channel, grp.chat_id) not in seen:
-                seen.add((grp.channel, grp.chat_id))
-                targets.append({"channel": grp.channel, "chat_id": grp.chat_id,
-                                "party_type": None, "party": None, "mobile_no": ""})
-
-    names = []
-    for t in targets:
-        log = frappe.get_doc({
-            "doctype": "Hub Message Log", "notification": rule.name, "status": "Queued", "channel": t["channel"],
-            "reference_doctype": ref_doctype, "reference_name": ref_name,
-            "party_type": t["party_type"], "party": t["party"],
-            "mobile_no": t["mobile_no"], "chat_id": t["chat_id"], "message": message,
-            "attach_print": rule.attach_print, "print_format": rule.print_format,
-        }).insert(ignore_permissions=True)
-        frappe.db.commit()
-        deliver(log.name, notify=not force)
-        names.append(log.name)
-    return names
+    message = frappe.render_template(rule_message(rule, s), template_context(doc, extra))
+    targets = [dict(p, channel=ch) for ch in active for p in _people(rule, doc, contact_only)] + groups
+    return send_to_targets(targets, message, ref_doctype, ref_name, notification=rule.get("title"),
+                           attach_print=rule.get("attach_print"), print_format=rule.get("print_format"),
+                           notify=not force)
 
 
 def run_date_rules():
-    """Daily: rules with event Days Before / Days After."""
+    """Daily: notifications with event Days Before / Days After."""
     from frappe.utils import add_days, nowdate
 
+    s = settings()
     if not enabled_channels():
         return
-    for rule in frappe.get_all("Hub Notification Rule", pluck="name",
-                               filters={"enabled": 1, "event": ("in", ("Days Before", "Days After"))}):
-        rule = frappe.get_doc("Hub Notification Rule", rule)
+    for rule in s.notifications:
+        if not (rule.enabled and rule.event in ("Days Before", "Days After") and rule.date_changed):
+            continue
         days = rule.days_in_advance or 0
         day = add_days(nowdate(), days if rule.event == "Days Before" else -days)
         meta = frappe.get_meta(rule.document_type)
-        if not meta.has_field(rule.date_changed):
+        df = meta.get_field(rule.date_changed)
+        if not df:
             continue
-        filters = {rule.date_changed: day}
+        filters = {rule.date_changed: ("between", (day, day)) if df.fieldtype == "Datetime" else day}
         if meta.is_submittable:
             filters["docstatus"] = ("<", 2)
-        if meta.get_field(rule.date_changed).fieldtype == "Datetime":
-            filters[rule.date_changed] = ("between", (day, day))
         for name in frappe.get_all(rule.document_type, filters=filters, pluck="name"):
             try:
                 process_rule(rule, rule.document_type, name)
             except Exception:
-                frappe.log_error(title="Notification Hub: date rule", message=f"{rule.name} {name}\n{frappe.get_traceback()}")
+                frappe.log_error(title="Notification Hub: date notification",
+                                 message=f"{rule.title} {name}\n{frappe.get_traceback()}")
+
+
+# ---------------- User alerts (system notifications -> WhatsApp / Telegram) ----------------
+def _alert_applies(row, log, roles):
+    if not row.enabled:
+        return False
+    if row.applies_to == "User" and row.user != log.for_user:
+        return False
+    if row.applies_to == "Role" and row.role not in roles:
+        return False
+    types = _lines(row.types)
+    if types and (log.type or "Alert") not in types:
+        return False
+    doctypes = _lines(row.document_types)
+    return not doctypes or log.document_type in doctypes
+
+
+def forward_system_notification(doc, method=None):
+    """Notification Log after_insert: queue the matching User Alerts."""
+    if doc.document_type == "Hub Message Log" or not doc.for_user:
+        return  # our own failure alerts must not loop back
+    s = frappe.get_cached_doc("Notification Hub")
+    if not s.user_alerts or not (s.enabled or s.whatsapp_enabled):
+        return
+    roles = set(frappe.get_roles(doc.for_user))
+    rows = [r for r in s.user_alerts if _alert_applies(r, doc, roles)]
+    if not rows:
+        return
+    channels = sorted({c for r in rows for c in rule_channels(r)})
+    template = next((r.template for r in rows if r.template), None)
+    frappe.enqueue("telegram_connector.sender.send_user_alert", queue="short", enqueue_after_commit=True,
+                   log_name=doc.name, channels=channels, template=template)
+
+
+def send_user_alert(log_name, channels, template=None):
+    from frappe.utils import strip_html
+
+    s = settings()
+    log = frappe.get_doc("Notification Log", log_name)
+    ref = None
+    if log.document_type and log.document_name and frappe.db.exists(log.document_type, log.document_name):
+        ref = frappe.get_doc(log.document_type, log.document_name)
+    subject = strip_html(log.subject or "").strip()
+    link = frappe.utils.get_url_to_form(log.document_type, log.document_name) if ref else ""
+    tpl = template and get_template(template, s)
+    if tpl:
+        ctx = template_context(ref, {"changed_by": log.from_user, "subject": subject, "link": link})
+        message = frappe.render_template(tpl, ctx)
+    else:
+        message = "\n".join(x for x in (subject, strip_html(log.email_content or "").strip(), link) if x)
+    active = [c for c in channels if channel_enabled(c, s)]
+    targets = [dict(_user_target(log.for_user), channel=c) for c in active]
+    send_to_targets(targets, message, log.document_type or "Notification Log", log.document_name or log.name,
+                    notification=f"User Alert: {log.type or 'Alert'}", notify=False)
 
 
 def deliver(log_name, notify=False):

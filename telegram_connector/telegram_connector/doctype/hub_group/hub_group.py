@@ -1,5 +1,5 @@
 from frappe.model.document import Document
 
 
-class HubRuleRecipient(Document):
+class HubGroup(Document):
     pass

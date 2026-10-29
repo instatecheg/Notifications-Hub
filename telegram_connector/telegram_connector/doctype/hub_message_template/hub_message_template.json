@@ -1,0 +1,45 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Message Template",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Data",
+   "label": "Template Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "For Document",
+   "options": "DocType",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Optional. Leave empty to use it with any document."
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "options": "Jinja",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4,
+   "description": "Use {{ doc.fieldname }} for document values. Also: {{ changed_by }}, {{ old_value }}, {{ new_value }}, {{ field_label }}, {{ subject }} and {{ link }} (for user notifications)."
+  },
+  {
+   "fieldname": "btn_edit",
+   "fieldtype": "Button",
+   "label": "Edit",
+   "in_list_view": 1,
+   "columns": 1
+  }
+ ],
+ "permissions": []
+}

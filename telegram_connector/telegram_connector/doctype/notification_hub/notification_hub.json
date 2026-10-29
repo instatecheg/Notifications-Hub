@@ -60,6 +60,70 @@
    "label": "Troubleshooting"
   },
   {
+   "fieldname": "tab_notifications",
+   "fieldtype": "Tab Break",
+   "label": "Notifications"
+  },
+  {
+   "fieldname": "sec_notifications",
+   "fieldtype": "Section Break",
+   "description": "Each row is one notification. Click Edit to set the event, conditions, recipients and message, no code needed."
+  },
+  {
+   "fieldname": "notifications",
+   "fieldtype": "Table",
+   "label": "Notifications",
+   "options": "Hub Notification"
+  },
+  {
+   "fieldname": "tab_users",
+   "fieldtype": "Tab Break",
+   "label": "User Alerts"
+  },
+  {
+   "fieldname": "sec_users",
+   "fieldtype": "Section Break",
+   "description": "Forward the system notifications (the bell: status changes, assignments, mentions, shares) to users on WhatsApp / Telegram. Click Edit to choose which notifications and documents."
+  },
+  {
+   "fieldname": "user_alerts",
+   "fieldtype": "Table",
+   "label": "User Alerts",
+   "options": "Hub User Alert"
+  },
+  {
+   "fieldname": "tab_templates",
+   "fieldtype": "Tab Break",
+   "label": "Templates"
+  },
+  {
+   "fieldname": "sec_templates",
+   "fieldtype": "Section Break",
+   "description": "Reusable messages. Pick one in a notification or user alert; editing it here updates everyone who uses it."
+  },
+  {
+   "fieldname": "templates",
+   "fieldtype": "Table",
+   "label": "Templates",
+   "options": "Hub Message Template"
+  },
+  {
+   "fieldname": "tab_groups",
+   "fieldtype": "Tab Break",
+   "label": "Groups"
+  },
+  {
+   "fieldname": "sec_groups",
+   "fieldtype": "Section Break",
+   "description": "WhatsApp and Telegram groups that notifications can be sent to."
+  },
+  {
+   "fieldname": "groups",
+   "fieldtype": "Table",
+   "label": "Groups",
+   "options": "Hub Group"
+  },
+  {
    "fieldname": "tab_telegram",
    "fieldtype": "Tab Break",
    "label": "Telegram"
@@ -119,7 +183,7 @@
    "fieldname": "group_chat_id",
    "fieldtype": "Data",
    "label": "Driver Notifications Group Chat ID",
-   "description": "Telegram group that receives Delivery Trip / Transportation Request details. For other groups use Hub Chat Group.",
+   "description": "Telegram group that receives Delivery Trip / Transportation Request details. For other groups use the Groups tab.",
    "default": "-5524050749"
   },
   {

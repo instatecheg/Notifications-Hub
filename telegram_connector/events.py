@@ -1,6 +1,6 @@
 import frappe
 
-INTERNAL = {"Notification Hub", "Hub Notification Rule", "Hub Message Log", "Telegram Link", "Hub Chat Group"}
+INTERNAL = {"Notification Hub", "Hub Message Log", "Telegram Link", "Notification Log"}
 EVENTS = {"after_insert": "New", "on_update": "Save", "on_submit": "Submit", "on_cancel": "Cancel"}
 # Value Change is checked on every save, also on Update After Submit
 VALUE_CHANGE_METHODS = {"on_update", "on_update_after_submit"}
@@ -15,19 +15,13 @@ def handle(doc, method=None):
     event = EVENTS.get(method)
     if not event and method not in VALUE_CHANGE_METHODS:
         return
-    if not (
-        frappe.db.get_single_value("Notification Hub", "enabled")
-        or frappe.db.get_single_value("Notification Hub", "whatsapp_enabled")
-    ):
+    hub = frappe.get_cached_doc("Notification Hub")  # cleared by Frappe whenever the Hub is saved
+    if not (hub.enabled or hub.whatsapp_enabled):
         return
     events = [event] if event else []
     if method in VALUE_CHANGE_METHODS:
         events.append("Value Change")
-    rules = frappe.get_all(
-        "Hub Notification Rule",
-        filters={"enabled": 1, "document_type": doc.doctype, "event": ("in", events)},
-        fields=["name", "event", "value_changed"],
-    )
+    rules = [r for r in hub.notifications if r.enabled and r.document_type == doc.doctype and r.event in events]
     for r in rules:
         extra = {"changed_by": frappe.session.user}
         if r.event == "Value Change":
