@@ -92,7 +92,8 @@ def _pick_rule(doctype, channel):
         from telegram_connector import presets
 
         return frappe._dict(presets.get_preset("Sales Invoice"), title=None, print_format=None)
-    frappe.throw(f"No enabled notification for {doctype} in Notification Hub > Notifications. Please add one first.")
+    frappe.throw(f"No enabled notification exists for {doctype}. Please add one in Notification Hub > Notifications.",
+                 title="Notification Not Configured")
 
 
 @frappe.whitelist()
@@ -101,13 +102,14 @@ def notify_customer(doctype, name, channel=None):
     frappe.has_permission(doctype, "read", name, throw=True)
     enabled = sender.enabled_channels()
     if not enabled:
-        frappe.throw("No channel is enabled. Enable Telegram or WhatsApp in Notification Hub.")
+        frappe.throw("No messaging channel is enabled. Please enable Telegram or WhatsApp in Notification Hub.",
+                     title="No Channel Enabled")
     if channel in (None, "", "Both"):
         targets = enabled
     elif channel in enabled:
         targets = [channel]
     else:
-        frappe.throw(f"{channel} is not enabled in Notification Hub")
+        frappe.throw(f"{channel} is not enabled. Please enable it in Notification Hub.", title="Channel Not Enabled")
     results = []
     for ch in targets:
         rule = _pick_rule(doctype, ch)

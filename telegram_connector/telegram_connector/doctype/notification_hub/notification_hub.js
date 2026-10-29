@@ -25,172 +25,27 @@ const CSS = `
 </style>`;
 
 const GUIDES = {
-	whatsapp: {
-		title: "WhatsApp (Wapilot) Setup Guide",
-		html: `
-<div class="hub-guide">
-<p>Messages are sent through <b>Wapilot</b>, a WhatsApp gateway. Customers do <b>not</b> need to link anything: the app only needs their mobile number.</p>
-
-<h5>Step 1: Prepare your Wapilot account</h5>
-<ol>
-<li>Sign in to your Wapilot dashboard and connect your WhatsApp number (scan the QR code). The number must show as <b>connected / active</b>.</li>
-<li>Copy your <b>API token</b> from the dashboard (API / Developer settings).</li>
-<li>Note your <b>Instance ID</b> (the number used in your API URL, for example <code>4558</code>).</li>
-</ol>
-
-<h5>Step 2: Fill Notification Hub</h5>
-<ol>
-<li>Tick <b>Enable WhatsApp</b> and set <b>Default Country Code</b> (Egypt = <code>20</code>).</li>
-<li>Paste the token in <b>Wapilot API Token</b>.</li>
-<li>Set <b>Wapilot Base URL</b> according to the API you have:
-<table>
-<tr><th>Your API</th><th>Base URL</th><th>Extra step</th></tr>
-<tr><td><b>API v2</b> (api.wapilot.net)</td><td><pre>https://api.wapilot.net/api/v2/INSTANCE_ID/send-message</pre></td><td>None. No Python package needed.</td></tr>
-<tr><td><b>Classic SDK</b> (app.wapilot.io)</td><td><pre>https://app.wapilot.io</pre></td><td>Run on the server: <code>./env/bin/pip install wapilot-sdk</code> then <code>bench restart</code></td></tr>
-</table></li>
-<li>For API v2 leave <b>Phone Format</b> on <i>Digits only</i> unless Wapilot asks for the plus sign.</li>
-<li>Click <b>Save</b>.</li>
-</ol>
-
-<h5>Step 3: Run the diagnostics</h5>
-<ol>
-<li>Click <b>WhatsApp Diagnostics</b>. It never sends a message; it only checks the setup.</li>
-<li>For API v2, a <i>validation error (HTTP 400/422)</i> on the empty test body is the <b>expected, good</b> result. It proves the URL, instance and token are reachable.</li>
-<li>Any red line tells you exactly what to fix.</li>
-</ol>
-
-<h5>Step 4: Send a test message</h5>
-<ol>
-<li>At the bottom, set <b>Test Channel = WhatsApp</b>.</li>
-<li>Enter <b>Test Recipient</b> (for example <code>01221396684</code>; it is converted using the country code).</li>
-<li>Click <b>Send Test Message</b>. A green "Sent" means it works.</li>
-</ol>
-
-<div class="note">If the test fails with "missing field" or "validation" details, open <b>Advanced (API v2 payloads)</b> and change the field names to the ones Wapilot asks for. Placeholders: <code>{phone}</code> <code>{message}</code>. Default:
-<pre>{"chat_id": "{phone}", "text": "{message}"}</pre></div>
-
-<h5>Step 5: Automatic sending</h5>
-<ol>
-<li>Open the <b>Notifications</b> tab, add a row, choose the Document (for example Sales Invoice), the event, and <b>Channel = WhatsApp</b> or <b>Both</b>.</li>
-<li>Or use the <b>Notify Customer</b> button on a Sales Invoice for an immediate send.</li>
-<li>The message comes from the notification or from a saved template (<b>Templates</b> tab). Click <b>Load Default Message</b> in a notification for the professional invoice layout.</li>
-<li>Check <b>Hub Message Log</b> for the status of each message. Use <b>Retry</b> after fixing a problem.</li>
-</ol>
-
-<h5>Step 6: WhatsApp groups</h5>
-<ol>
-<li>Groups need <b>API v2</b>. The connected WhatsApp number must be a member of the group.</li>
-<li>Click <b>WhatsApp Diagnostics</b>: it tries to list your groups. Copy the group id ending with <code>@g.us</code> (or take it from the Wapilot dashboard).</li>
-<li>Add it in the <b>Groups</b> tab with Channel = WhatsApp. Test it in the <b>Test</b> tab by putting the id in Test Recipient.</li>
-<li>In a notification (<b>Notifications</b> tab &gt; Edit), pick the group under <b>Send To &gt; Groups</b>.</li>
-</ol>
-
-<div class="tip"><b>PDF attachments:</b> Wapilot downloads the PDF from a URL, so your site must be reachable from the internet (set <code>host_name</code> in <code>site_config.json</code>). A site that only works on a local address such as <code>192.168.x.x</code> can send text but not PDFs.</div>
-</div>`,
-	},
-
-	tg_bot: {
-		title: "Telegram Bot Setup Guide",
-		html: `
-<div class="hub-guide">
-<p><b>Bot mode</b> is the official and safest way. The customer must press <b>Start</b> on your bot once, then they receive everything automatically.</p>
-
-<h5>Step 1: Create the bot</h5>
-<ol>
-<li>In Telegram open <b>@BotFather</b> and send <code>/newbot</code>.</li>
-<li>Choose a name and a username ending with <code>bot</code>.</li>
-<li>Copy the <b>token</b> BotFather gives you.</li>
-</ol>
-
-<h5>Step 2: Fill Notification Hub</h5>
-<ol>
-<li>Tick <b>Enable Telegram</b> and set <b>Mode = Bot</b>.</li>
-<li>Paste the token in <b>Bot Token</b> and click <b>Save</b>.</li>
-<li>Click <b>Test Connection</b>. You should see <i>Bot: @your_bot</i> and <b>Bot Username</b> is filled automatically.</li>
-</ol>
-
-<h5>Step 3: Choose how the bot receives "Start"</h5>
-<table>
-<tr><th>Link Method</th><th>Use when</th><th>Notes</th></tr>
-<tr><td><b>Polling</b></td><td>Server is internal / no public HTTPS (default)</td><td>The scheduler must be running (it checks every minute). Verify with <code>bench doctor</code>.</td></tr>
-<tr><td><b>Webhook</b></td><td>Site has a public <b>HTTPS</b> address</td><td>Click <b>Set Webhook</b> after saving.</td></tr>
-</table>
-
-<h5>Step 4: Link a customer</h5>
-<ol>
-<li>Open <b>Telegram Link</b> (or use the button on the Customer form). A personal link is created for the customer.</li>
-<li>Send that link to the customer. They open it and press <b>Start</b>.</li>
-<li>Within about a minute the status changes to <b>Linked</b> and a confirmation message appears in their chat.</li>
-</ol>
-
-<h5>Step 5: Test and automate</h5>
-<ol>
-<li>Set <b>Test Channel = Telegram</b>, and put a <b>chat id</b> (shown on a Linked Telegram Link) in <b>Test Recipient</b>, then click <b>Send Test Message</b>.</li>
-<li>Add a notification in the <b>Notifications</b> tab with <b>Channel = Telegram</b> or <b>Both</b>, or use <b>Notify Customer</b> on a Sales Invoice.</li>
-</ol>
-
-<div class="note">A bot can never message someone who has not pressed Start. A status of <b>Not Linked</b> in Hub Message Log means exactly this.</div>
-</div>`,
-	},
-
-	tg_user: {
-		title: "Telegram User Account Setup Guide",
-		html: `
-<div class="hub-guide">
-<p><b>User Account mode</b> sends from a normal Telegram account using only the customer's phone number. The customer does not need to press Start, but the number must exist on Telegram and allow contact by phone number.</p>
-<div class="note">Use a <b>dedicated number</b>, not your personal account. Sending many unsolicited messages can get a user account limited or banned by Telegram. Keep the volume low and only message customers who expect it.</div>
-
-<h5>Step 1: Get api_id and api_hash</h5>
-<ol>
-<li>Open <code>https://my.telegram.org</code> and log in with the account's phone number.</li>
-<li>Choose <b>API development tools</b> and create an application (any name).</li>
-<li>Copy <b>api_id</b> (digits only) and <b>api_hash</b>.</li>
-</ol>
-
-<h5>Step 2: Fill Notification Hub</h5>
-<ol>
-<li>Tick <b>Enable Telegram</b> and set <b>Mode = User Account</b>.</li>
-<li>Enter <b>Api Id</b> and <b>Api Hash</b>.</li>
-<li>Enter <b>Login Phone</b> (international format, for example <code>+201001234567</code>) and click <b>Save</b>.</li>
-</ol>
-
-<h5>Step 3: Log in</h5>
-<ol>
-<li>Click <b>Send Code</b>. A code arrives inside the Telegram app of that account (not by SMS).</li>
-<li>Type it in <b>Login Code</b>. If the account has Two-Step Verification, also fill <b>Two Fa Password</b>.</li>
-<li>Click <b>Verify &amp; Login</b>. <b>Account Status</b> shows the account name and <b>Session String</b> is stored.</li>
-<li>Click <b>Test Connection</b> any time to confirm the session is still valid.</li>
-</ol>
-<div class="tip">The code is valid for 10 minutes. If you see "Click Send Code first", request a new code.</div>
-
-<h5>Step 4: Test</h5>
-<ol>
-<li>Set <b>Test Channel = Telegram</b>, put a <b>mobile number</b> in <b>Test Recipient</b>, then click <b>Send Test Message</b>.</li>
-<li>Use the <b>Notifications</b> tab or <b>Notify Customer</b> for real messages. Telegram Link is created automatically.</li>
-</ol>
-</div>`,
-	},
-
 	trouble: {
 		title: "Troubleshooting",
 		html: `
 <div class="hub-guide">
-<p>Every failed message is stored in <b>Hub Message Log</b> with a <b>Problem in</b> / <b>Cause and fix</b> text. Common cases:</p>
+<p>Every message is recorded in <b>Hub Message Log</b>. A failed message shows the <b>Issue</b>, the <b>Resolution</b>
+and the technical details. The most common cases are listed below.</p>
 <table>
-<tr><th>Message</th><th>Meaning and fix</th></tr>
-<tr><td>HTTP 405 "Method not allowed"</td><td>The URL does not accept the request type. For WhatsApp API v2 use the <b>full</b> URL ending in <code>/send-message</code> (the app sends a POST). Browsers and GET checks always show 405 here; that is normal.</td></tr>
-<tr><td>HTTP 401 / 403 (WhatsApp)</td><td>Wrong or expired Wapilot token. Generate a new one and save.</td></tr>
-<tr><td>HTTP 404 (WhatsApp)</td><td>Wrong <b>Instance ID</b> in the URL, or the WhatsApp number is not connected in Wapilot.</td></tr>
-<tr><td>HTTP 400 / 422 (WhatsApp)</td><td>Wapilot rejected the data. Read the technical details: they name the field. Adjust <b>Advanced (API v2 payloads)</b> or the <b>Phone Format</b>.</td></tr>
-<tr><td>wapilot-sdk is not installed</td><td>Only for the classic base URL <code>https://app.wapilot.io</code>. Run <code>./env/bin/pip install wapilot-sdk</code> and <code>bench restart</code>.</td></tr>
-<tr><td>Message delivered. PDF not attached</td><td>The text was sent; only the PDF failed. Usual cause: the site address is internal (WhatsApp cannot download the file) or the media endpoint differs. Fix <code>host_name</code> or <b>Media Endpoint / Media Payload</b>, or untick <b>Attach Print</b> on the rule.</td></tr>
-<tr><td>Not Linked (Telegram Bot)</td><td>The customer has not pressed Start. Send them the link from <b>Telegram Link</b>.</td></tr>
-<tr><td>chat not found / blocked by the user</td><td>Wrong chat id, or the customer blocked the bot. They must unblock and press Start.</td></tr>
-<tr><td>Unauthorized (Telegram)</td><td>Bad bot token. Copy it again from @BotFather.</td></tr>
-<tr><td>Session expired (User Account)</td><td>Log in again: <b>Send Code</b>, then <b>Verify &amp; Login</b>.</td></tr>
-<tr><td>Nothing is sent automatically</td><td>Check: channel is enabled, the notification is enabled and its conditions are true, and the scheduler is running (<code>bench doctor</code>).</td></tr>
+<tr><th>Message</th><th>Meaning and resolution</th></tr>
+<tr><td>HTTP 405 "Method not allowed"</td><td>The URL does not accept this type of request. For WhatsApp API v2, please use the <b>full</b> URL ending with <code>/send-message</code>.</td></tr>
+<tr><td>HTTP 401 / 403 (WhatsApp)</td><td>The Wapilot token is invalid or expired. Please generate a new token and save it.</td></tr>
+<tr><td>HTTP 404 / Instance not found (WhatsApp)</td><td>The <b>Instance ID</b> in the Base URL is incorrect, or the WhatsApp number is not connected in Wapilot. Please run WhatsApp Diagnostics.</td></tr>
+<tr><td>HTTP 400 / 422 (WhatsApp)</td><td>Wapilot rejected the request data. The technical details name the field; please adjust <b>Advanced (API v2 payloads)</b> or the <b>Phone Format</b>.</td></tr>
+<tr><td>The wapilot-sdk package is not installed</td><td>Applies to the classic Base URL <code>https://app.wapilot.io</code> only. Please run <code>./env/bin/pip install wapilot-sdk</code>, then <code>bench restart</code>.</td></tr>
+<tr><td>The message was delivered, but the PDF was not attached</td><td>The text was delivered; only the PDF failed. The site address is usually not reachable from the internet, or the media endpoint differs. Please correct <code>host_name</code> or the <b>Media Endpoint / Media Payload</b>, or disable <b>Attach PDF</b> in the notification.</td></tr>
+<tr><td>Not Linked (Telegram Bot)</td><td>The recipient has not opened their Telegram link and pressed Start. Please send them the link from <b>Telegram Link</b>.</td></tr>
+<tr><td>Chat not found / blocked by the user</td><td>The chat id is incorrect, or the recipient has blocked the bot. They must unblock it and press Start again.</td></tr>
+<tr><td>Unauthorized (Telegram)</td><td>The bot token is invalid. Please copy it again from @BotFather.</td></tr>
+<tr><td>Session expired (User Account)</td><td>Please log in again: <b>Send Code</b>, then <b>Verify &amp; Login</b>.</td></tr>
+<tr><td>No message is sent automatically</td><td>Please verify that the channel is enabled, the notification is enabled, its conditions are met, and the scheduler is running (<code>bench doctor</code>).</td></tr>
 </table>
-<p>After fixing a problem open the failed <b>Hub Message Log</b> entry and click <b>Retry</b>.</p>
+<p>After resolving the issue, open the failed entry in <b>Hub Message Log</b> and click <b>Retry</b>.</p>
 </div>`,
 	},
 };
@@ -230,6 +85,9 @@ const EXTRA_VALUES = [
 	{ label: __("Value Change: new value"), value: "{{ new_value }}" },
 	{ label: __("User Alert: notification text"), value: "{{ subject }}" },
 ];
+
+// A titled, formal message window
+const notice = (title, message, indicator = "orange") => frappe.msgprint({ title, message, indicator });
 
 const lines = t => (t || "").split("\n").map(s => s.trim()).filter(Boolean);
 const field_cache = {};
@@ -271,7 +129,7 @@ function insert_field(dt, get, set) {
 }
 
 function preview(dt, message) {
-	if (!dt) return frappe.msgprint(__("Select a Document first"));
+	if (!dt) return notice(__("Document Required"), __("Please select a document before previewing the message."));
 	const d = new frappe.ui.Dialog({
 		title: __("Preview Message"),
 		fields: [{ fieldname: "docname", fieldtype: "Link", label: __("Preview with"), options: dt, reqd: 1 }],
@@ -395,9 +253,9 @@ function edit_notification(frm, cdn) {
 		primary_action_label: __("Save"),
 		primary_action(v) {
 			const dt = v.document_type;
-			if (v.event === "Value Change" && !v.value_changed) return frappe.msgprint(__("Choose the field that changes"));
-			if (DATE_EVENTS.includes(v.event) && !v.date_changed) return frappe.msgprint(__("Choose the Reference Date"));
-			if (!v.template && !(v.message || "").trim()) return frappe.msgprint(__("Choose a Template or write a Message"));
+			if (v.event === "Value Change" && !v.value_changed) return notice(__("Field Required"), __("Please select the field whose change triggers this notification."));
+			if (DATE_EVENTS.includes(v.event) && !v.date_changed) return notice(__("Reference Date Required"), __("Please select the date field the days are counted from."));
+			if (!v.template && !(v.message || "").trim()) return notice(__("Message Required"), __("Please select a template or enter a message."));
 			const filters = filter_group ? filter_group.get_filters().map(f => f.slice(0, 4)) : [];
 			saved = true;
 			d.hide();
@@ -432,7 +290,7 @@ function edit_notification(frm, cdn) {
 		const dt = d.get_value("document_type");
 		const area = d.fields_dict.filter_area.$wrapper.empty();
 		filter_group = null;
-		if (!dt) return area.html(`<p class="text-muted">${__("Select a Document first")}</p>`);
+		if (!dt) return area.html(`<p class="text-muted">${__("Please select a document to define conditions.")}</p>`);
 		frappe.model.with_doctype(dt, () => {
 			filter_group = new frappe.ui.FilterGroup({ parent: area, doctype: dt, on_change: () => {} });
 			if (filters && filters.length) filter_group.add_filters_to_filter_group(filters);
@@ -478,14 +336,16 @@ function edit_notification(frm, cdn) {
 
 	function save_as_template() {
 		const message = d.get_value("message");
-		if (!(message || "").trim()) return frappe.msgprint(__("Write the message first"));
+		if (!(message || "").trim()) return notice(__("Message Required"), __("Please enter the message before saving it as a template."));
 		frappe.prompt({ fieldname: "name", fieldtype: "Data", label: __("Template Name"), reqd: 1 }, v => {
-			if (template_names(frm).includes(v.name)) return frappe.msgprint(__("A template with this name already exists"));
+			if (template_names(frm).includes(v.name)) {
+				return notice(__("Duplicate Template Name"), __("A template named {0} already exists. Please choose a different name.", [v.name]));
+			}
 			frm.add_child("templates", { template_name: v.name, document_type: d.get_value("document_type"), message });
 			frm.refresh_field("templates");
 			set_template_options();
 			d.set_value("template", v.name);
-			frappe.show_alert({ message: __("Template saved. It is stored when you click Save."), indicator: "green" });
+			frappe.show_alert({ message: __("The template {0} has been added. It will be stored when this notification is saved.", [v.name]), indicator: "green" });
 		}, __("Save as Template"));
 	}
 
@@ -542,8 +402,8 @@ function edit_user_alert(frm, cdn) {
 		],
 		primary_action_label: __("Save"),
 		primary_action(v) {
-			if (v.applies_to === "User" && !v.user) return frappe.msgprint(__("Choose a User"));
-			if (v.applies_to === "Role" && !v.role) return frappe.msgprint(__("Choose a Role"));
+			if (v.applies_to === "User" && !v.user) return notice(__("User Required"), __("Please select a user."));
+			if (v.applies_to === "Role" && !v.role) return notice(__("Role Required"), __("Please select a role."));
 			saved = true;
 			d.hide();
 			save_row(frm, cdt, cdn, {
@@ -564,12 +424,13 @@ function edit_user_alert(frm, cdn) {
 function telegram_link(user) {
 	frappe.call({ method: "telegram_connector.api.get_user_telegram_link", args: { user } }).then(r => {
 		const l = r.message || {};
-		if (l.status === "Linked") return frappe.msgprint(__("{0} is already linked on Telegram.", [user]));
-		if (!l.deep_link) return frappe.msgprint(__("Click Test Connection in the Telegram tab first to detect the bot username."));
+		if (l.status === "Linked") return notice(__("Already Linked"), __("The user {0} is already linked on Telegram.", [user]), "green");
+		if (!l.deep_link) return notice(__("Bot Username Missing"), __("The bot username is not known yet. Please click Test Connection in the Telegram tab first."));
 		frappe.msgprint({
 			title: __("Telegram Link"),
-			message: __("Send this link to {0}. They open it and press Start once:", [user]) +
+			message: __("Please send this link to {0}. Once they open it and press Start, they will receive their alerts on Telegram. The link has been copied to the clipboard.", [user]) +
 				`<br><br><b>${frappe.utils.escape_html(l.deep_link)}</b>`,
+			indicator: "blue",
 		});
 		frappe.utils.copy_to_clipboard(l.deep_link);
 	});
@@ -598,7 +459,7 @@ function edit_template(frm, cdn) {
 		primary_action_label: __("Save"),
 		primary_action(v) {
 			const other = (frm.doc.templates || []).find(t => t.name !== cdn && t.template_name === v.template_name);
-			if (other) return frappe.msgprint(__("A template with this name already exists"));
+			if (other) return notice(__("Duplicate Template Name"), __("A template named {0} already exists. Please choose a different name.", [v.template_name]));
 			// keep notifications and alerts pointing at a renamed template
 			if (row.template_name && row.template_name !== v.template_name) {
 				[...(frm.doc.notifications || []), ...(frm.doc.user_alerts || [])]
@@ -638,8 +499,5 @@ frappe.ui.form.on("Notification Hub", {
 	btn_send_test: f => run(f, "send_test_message"),
 	btn_wa_check: f => run(f, "diagnose_whatsapp"),
 
-	btn_guide_whatsapp: () => show_guide("whatsapp"),
-	btn_guide_tg_bot: () => show_guide("tg_bot"),
-	btn_guide_tg_user: () => show_guide("tg_user"),
 	btn_guide_trouble: () => show_guide("trouble"),
 });

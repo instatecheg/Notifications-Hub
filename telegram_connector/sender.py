@@ -30,7 +30,7 @@ def normalize_phone(phone, cc="20"):
 
 
 # ---------------- Readable error diagnosis ----------------
-MARK = "❌"
+MARK = "Issue:"
 
 
 def explain(channel, exc, status=None, body=None):
@@ -47,53 +47,53 @@ def explain(channel, exc, status=None, body=None):
     where = hint = None
     if channel == "WhatsApp":
         if "not installed" in low:
-            where, hint = "Python package wapilot-sdk", "It is not installed on the server. Run: ./env/bin/pip install wapilot-sdk then bench restart."
+            where, hint = "Python package wapilot-sdk", "The package is not installed on the server. Please run ./env/bin/pip install wapilot-sdk, then bench restart."
         elif "token is not set" in low:
-            where, hint = "Wapilot API Token (Notification Hub)", "The token is empty. Paste it from your Wapilot dashboard and save."
+            where, hint = "Wapilot API Token", "The token is empty. Please copy it from the Wapilot dashboard into the WhatsApp tab of Notification Hub and save."
         elif status in (401, 403):
-            where, hint = "Wapilot API Token", "The token is wrong, expired or has no permission. Generate a new one in the Wapilot dashboard and save it in Notification Hub."
+            where, hint = "Wapilot API Token", "The token is invalid, expired or lacks permission. Please generate a new token in the Wapilot dashboard and save it in Notification Hub."
         elif status == 405:
-            where, hint = "Wapilot Base URL (wrong endpoint)", "The URL exists but does not accept this request type. For API v2 use the full send URL: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            where, hint = "Wapilot Base URL", "The URL does not accept this type of request. For API v2 please use the full send URL: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
         elif status == 404 and is_html:
-            where, hint = "Wapilot Base URL", "The URL reaches a website page, not the API. Classic mode: use the domain only (https://app.wapilot.io). API v2: use https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            where, hint = "Wapilot Base URL", "The URL points to a web page, not to the API. Classic mode requires the domain only (https://app.wapilot.io). API v2 requires https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
         elif status == 404 or "not_found" in low:
-            where, hint = "Wapilot account, instance ID or send endpoint", (
-                "Wapilot says the resource was not found. Possible causes: (1) the INSTANCE ID inside the URL is wrong, "
-                "(2) no WhatsApp number is connected/active in your Wapilot account, (3) the send endpoint is wrong. "
-                "Click WhatsApp Diagnostics in Notification Hub."
+            where, hint = "Wapilot instance or send endpoint", (
+                "Wapilot could not find the requested resource. Possible causes: (1) the instance ID in the Base URL is incorrect, "
+                "(2) no WhatsApp number is connected and active in the Wapilot account, (3) the send endpoint is incorrect. "
+                "Please run WhatsApp Diagnostics in Notification Hub."
             )
         elif status in (400, 422):
             where, hint = "Phone number or message data", (
-                "Wapilot rejected the data. Check the number is in international format and the message is not empty. "
-                "If the technical details name a missing field, adjust Text Message Payload in Advanced (API v2 payloads)."
+                "Wapilot rejected the request data. Please verify that the number is in international format and that the message is not empty. "
+                "If the technical details name a missing field, please adjust the Text Message Payload under Advanced (API v2 payloads)."
             )
         elif status == 429:
-            where, hint = "Wapilot rate limit", "Too many messages in a short time. Wait a bit, then click Retry."
+            where, hint = "Wapilot rate limit", "Too many messages were sent in a short period. Please wait, then click Retry."
         elif status and status >= 500:
-            where, hint = "Wapilot server", "A temporary problem on their side. Try again later."
+            where, hint = "Wapilot server", "Wapilot reported a temporary server error. Please try again later."
         elif net:
-            where, hint = "Internet connection or Wapilot Base URL", "The server could not reach Wapilot. Check the internet/DNS and that the URL is typed correctly."
+            where, hint = "Internet connection or Wapilot Base URL", "The server could not reach Wapilot. Please verify the internet connection, the DNS settings and the Base URL."
     else:
         if "unauthorized" in low or low.strip() == "not found":
-            where, hint = "Bot Token", "Telegram rejected the token. Copy it again from @BotFather and save it in Notification Hub."
+            where, hint = "Telegram Bot Token", "Telegram rejected the token. Please copy it again from @BotFather and save it in Notification Hub."
         elif "chat not found" in low:
-            where, hint = "Customer link (Chat ID)", "The customer has not pressed Start on the bot, or the Chat ID is wrong. Send them the link from Telegram Link."
+            where, hint = "Telegram link (chat id)", "The recipient has not started the bot, or the chat id is incorrect. Please send them their link from Telegram Link."
         elif "blocked by the user" in low:
-            where, hint = "The customer", "The customer blocked the bot. They must unblock it and press Start again."
+            where, hint = "Recipient", "The recipient has blocked the bot. They must unblock it and press Start again."
         elif "too many requests" in low or "flood" in low:
-            where, hint = "Telegram rate limit", "Telegram limited sending temporarily. Wait the time shown in the details, then click Retry."
+            where, hint = "Telegram rate limit", "Telegram has temporarily limited sending. Please wait for the period shown in the technical details, then click Retry."
         elif "phonenumberinvalid" in low:
-            where, hint = "Phone number", "The number is not valid. Check it is complete and in international format."
+            where, hint = "Phone number", "The number is not valid. Please verify that it is complete and in international format."
         elif "apiidinvalid" in low or "api_id" in low or "api_hash" in low:
-            where, hint = "api_id / api_hash", "The keys are wrong. Copy them again from my.telegram.org."
+            where, hint = "api_id / api_hash", "The credentials are incorrect. Please copy them again from my.telegram.org."
         elif any(k in low for k in ("authkey", "session", "not authorized", "sessionrevoked")):
-            where, hint = "Telegram account session", "The session expired or was revoked. Log the account in again (Send Code, then Verify & Login)."
+            where, hint = "Telegram account session", "The session has expired or was revoked. Please log in again (Send Code, then Verify & Login)."
         elif net:
-            where, hint = "Connection to Telegram", "The server could not reach Telegram. Check the internet or proxy."
+            where, hint = "Connection to Telegram", "The server could not reach Telegram. Please verify the internet connection or proxy settings."
     if not where:
-        where, hint = "Unknown", "See the technical details below and send them to your system administrator."
+        where, hint = "Unidentified", "Please review the technical details below and contact your system administrator if the problem persists."
     detail = raw if not body or is_html else f"{raw} | {str(body)[:300]}"
-    return f"{MARK} Problem in: {where}\nCause and fix: {hint}\nTechnical details: {detail[:600]}"
+    return f"{MARK} {where}\nResolution: {hint}\nTechnical details: {detail[:600]}"
 
 
 def notify_failure(log, status, error):
@@ -105,7 +105,8 @@ def notify_failure(log, status, error):
         users.add(frappe.session.user)
         users = [u for u in users if u != "Guest" and frappe.db.get_value("User", u, "enabled")]
         warn = status == "Sent"
-        subject = f"{log.channel or 'Telegram'}: {'Sent with warning' if warn else status} — {log.reference_doctype} {log.reference_name}"
+        outcome = {"Sent": "delivered with a warning", "Not Linked": "not delivered (recipient not linked)"}.get(status, "delivery failed")
+        subject = f"{log.channel or 'Telegram'} message {outcome}: {log.reference_doctype} {log.reference_name}"
         html = frappe.utils.escape_html(error or "").replace("\n", "<br>")
         for u in users:
             frappe.get_doc({
@@ -123,7 +124,7 @@ def notify_failure(log, status, error):
 def bot_call(method, data=None, files=None):
     token = settings().get_password("bot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Bot Token is not set")
+        raise frappe.ValidationError("The Telegram Bot Token is not set. Please enter it in the Telegram tab of Notification Hub.")
     try:
         r = requests.post(f"https://api.telegram.org/bot{token}/{method}", data=data, files=files, timeout=30)
         j = r.json()
@@ -146,20 +147,20 @@ def run_async(coro):
 
 def _creds(s):
     if not s.api_id:
-        raise frappe.ValidationError("api_id is not set")
+        raise frappe.ValidationError("The api_id is not set. Please enter it in the Telegram tab of Notification Hub.")
     api_hash = s.get_password("api_hash", raise_exception=False)
     if not api_hash:
-        raise frappe.ValidationError("api_hash is not set")
+        raise frappe.ValidationError("The api_hash is not set. Please enter it in the Telegram tab of Notification Hub.")
     try:
         return int(str(s.api_id).strip()), api_hash
     except ValueError:
-        raise frappe.ValidationError("api_id must contain digits only")
+        raise frappe.ValidationError("The api_id must contain digits only.")
 
 
 def _session(s):
     sess = s.get_password("session_string", raise_exception=False)
     if not sess:
-        raise frappe.ValidationError("The account is not logged in yet (Send Code, then Verify)")
+        raise frappe.ValidationError("The Telegram account is not logged in. Please click Send Code, then Verify & Login.")
     return sess
 
 
@@ -178,7 +179,7 @@ async def _resolve(c, phone):
 
     res = await c(ImportContactsRequest([InputPhoneContact(0, phone, "ERP", "")]))
     if not res.users:
-        raise NotLinked("This number is not registered on Telegram, or its privacy settings prevent access")
+        raise NotLinked("This number is not registered on Telegram, or its privacy settings do not allow contact by phone number.")
     return res.users[0]
 
 
@@ -186,7 +187,7 @@ async def _user_send(api_id, api_hash, session, phone, text, pdf, pdf_name):
     c = await _connect(api_id, api_hash, session)
     try:
         if not await c.is_user_authorized():
-            raise frappe.ValidationError("The session has expired. Please log in to the account again")
+            raise frappe.ValidationError("The Telegram session has expired. Please log in to the account again.")
         u = await _resolve(c, phone)
         await c.send_message(u, text)
         if pdf:
@@ -211,7 +212,7 @@ async def _user_me(api_id, api_hash, session):
     c = await _connect(api_id, api_hash, session)
     try:
         if not await c.is_user_authorized():
-            raise frappe.ValidationError("The session is not logged in")
+            raise frappe.ValidationError("The Telegram session is not logged in. Please click Send Code, then Verify & Login.")
         me = await c.get_me()
         return f"{me.first_name or ''} ({me.phone})"
     finally:
@@ -236,7 +237,7 @@ async def _verify(api_id, api_hash, session, phone, code, code_hash, pw):
             await c.sign_in(phone=phone, code=code, phone_code_hash=code_hash)
         except SessionPasswordNeededError:
             if not pw:
-                raise frappe.ValidationError("This account has Two-Step Verification enabled: enter the password in the Two Fa Password field")
+                raise frappe.ValidationError("This account has Two-Step Verification enabled. Please enter the password in the Two Fa Password field.")
             await c.sign_in(password=pw)
         me = await c.get_me()
         return c.session.save(), f"{me.first_name or ''} ({me.phone})"
@@ -531,7 +532,7 @@ def process_rule(rule, ref_doctype, ref_name, force=False, channels=None, extra=
     groups = [] if contact_only else _group_targets(_lines(rule.get("chat_groups")), s)
     if not active and not groups:
         if force:
-            frappe.throw("The selected channel is not enabled in Notification Hub")
+            frappe.throw("The selected channel is not enabled. Please enable it in Notification Hub.", title="Channel Not Enabled")
         return []
     message = frappe.render_template(rule_message(rule, s), template_context(doc, extra))
     targets = [dict(p, channel=ch) for ch in active for p in _people(rule, doc, contact_only)] + groups
@@ -629,14 +630,14 @@ def deliver(log_name, notify=False):
     status, error, chat_id = "Sent", "", log.chat_id
     try:
         if not s.enabled:
-            raise NotLinked("Notification Hub is not enabled")
+            raise NotLinked("Telegram is not enabled in Notification Hub.")
         pdf = None
         if log.attach_print:
             try:
                 pdf = frappe.get_print(log.reference_doctype, log.reference_name,
                                        print_format=log.print_format or None, as_pdf=True)
             except Exception as e:
-                error = f"Could not generate PDF: {e}"
+                error = f"The PDF could not be generated: {e}"
         link = find_link(log.party_type, log.party, log.mobile_no)
         pdf_name = f"{log.reference_name}.pdf"
         if s.mode == "Bot" and not log.party_type and log.chat_id:
@@ -646,14 +647,14 @@ def deliver(log_name, notify=False):
         elif s.mode == "Bot":
             if not (link and link.status == "Linked" and link.chat_id):
                 link = link or ensure_link(log.party_type, log.party, log.mobile_no)
-                raise NotLinked(f"The customer has not linked their account yet. Link: {link.deep_link}")
+                raise NotLinked(f"The recipient has not linked their Telegram account yet. Please send them this link: {link.deep_link}")
             chat_id = link.chat_id
             send_text(chat_id, None, log.message, pdf, pdf_name)
         else:
             if not log.party_type and log.chat_id and not log.mobile_no:
-                raise NotLinked("Sending to a Telegram group needs Mode = Bot in Notification Hub")
+                raise NotLinked("Sending to a Telegram group requires Mode = Bot in Notification Hub.")
             if not log.mobile_no:
-                raise NotLinked("No mobile number found")
+                raise NotLinked("No mobile number was found for this recipient.")
             info = send_text(None, log.mobile_no, log.message, pdf, pdf_name)
             chat_id = str(info["id"])
             link = link or ensure_link(log.party_type, log.party, log.mobile_no)
@@ -695,8 +696,8 @@ WA_DEFAULT_TEXT = '{"chat_id": "{phone}", "text": "{message}"}'
 WA_DEFAULT_MEDIA = '{"chat_id": "{phone}", "media_type": "document", "media_url": "{media_url}", "file_name": "{file_name}"}'
 
 
-_WA_GROUP_V2 = ("❌ Problem in: Wapilot Base URL\nCause and fix: Sending to WhatsApp groups needs Wapilot API v2. "
-                "Set Wapilot Base URL to https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message")
+_WA_GROUP_V2 = ("Issue: Wapilot Base URL\nResolution: Sending to WhatsApp groups requires Wapilot API v2. "
+                "Please set the Wapilot Base URL to https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message")
 
 
 def wa_base(s=None):
@@ -718,8 +719,8 @@ def wa_v2_urls(s=None):
     # "instances" is the API's list path and "<INSTANCE_ID>" the docs placeholder: neither is a real instance id
     if not m or m.group(1).lower() in ("instances", "instance", "send-message") or "<" in m.group(1) or "%3c" in m.group(1).lower():
         raise frappe.ValidationError(
-            "❌ Problem in: Wapilot Base URL (instance ID)\n"
-            "Cause and fix: The URL does not contain your real instance ID. Copy the instance ID from your Wapilot "
+            "Issue: Wapilot Base URL (instance ID)\n"
+            "Resolution: The URL does not contain a valid instance ID. Please copy the instance ID from the Wapilot "
             "dashboard and use: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
             f"\nTechnical details: current Base URL is {b or '(empty)'}"
         )
@@ -753,7 +754,7 @@ def _wa_render(template, default, **values):
     try:
         data = json.loads((template or "").strip() or default)
     except ValueError as e:
-        raise frappe.ValidationError(f"The payload in Advanced (API v2 payloads) is not valid JSON: {e}")
+        raise frappe.ValidationError(f"The payload under Advanced (API v2 payloads) is not valid JSON: {e}")
 
     def walk(x):
         if isinstance(x, str):
@@ -773,7 +774,7 @@ def _wa_v2_post(url, payload):
     s = settings()
     token = s.get_password("wapilot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Wapilot API token is not set")
+        raise frappe.ValidationError("The Wapilot API token is not set. Please enter it in the WhatsApp tab of Notification Hub.")
     try:
         r = requests.post(
             url, json=payload, timeout=30,
@@ -799,7 +800,7 @@ def _wa_client():
     s = settings()
     token = s.get_password("wapilot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Wapilot API token is not set")
+        raise frappe.ValidationError("The Wapilot API token is not set. Please enter it in the WhatsApp tab of Notification Hub.")
     try:
         from wapilot import WapilotSDK
     except ImportError:
@@ -856,8 +857,8 @@ def wa_send_pdf(phone, url, file_name):
 def _brief(exc):
     """Short, readable reason from an explain() text: no technical details."""
     t = str(exc)
-    where = re.search(r"Problem in: (.+)", t)
-    fix = re.search(r"Cause and fix: (.+)", t)
+    where = re.search(r"Issue: (.+)", t)
+    fix = re.search(r"Resolution: (.+)", t)
     if where and fix:
         return f"{where.group(1).strip()}. {fix.group(1).strip()}"
     return t.splitlines()[0][:200]
@@ -895,16 +896,16 @@ def _deliver_whatsapp(log, notify=False):
     status, error, quiet = "Sent", "", False
     try:
         if not s.whatsapp_enabled:
-            raise NotLinked("WhatsApp is not enabled in Notification Hub")
+            raise NotLinked("WhatsApp is not enabled in Notification Hub.")
         to = log.mobile_no or log.chat_id  # chat_id = WhatsApp group (…@g.us)
         if not to:
-            raise NotLinked("No mobile number found")
+            raise NotLinked("No mobile number was found for this recipient.")
         wa_send(to, log.message)
         if log.attach_print:
             if not _site_is_public():
                 # expected on an internal server: record it, but do not raise an alert for every message
-                error = ("Message delivered. PDF not attached: the site address is not reachable from the internet, "
-                         "which WhatsApp needs to download the file.")
+                error = ("The message was delivered, but the PDF was not attached because the site address is not reachable from the internet, "
+                         "which is required for WhatsApp to download the file.")
                 quiet = True
             else:
                 try:
@@ -912,7 +913,7 @@ def _deliver_whatsapp(log, notify=False):
                                            print_format=log.print_format or None, as_pdf=True)
                     wa_send_pdf(to, _public_pdf_url(log, pdf), f"{log.reference_name}.pdf")
                 except Exception as e:
-                    error = f"Message delivered. PDF not attached: {_brief(e)}"
+                    error = f"The message was delivered, but the PDF could not be attached: {_brief(e)}"
     except NotLinked as e:
         status, error = "Not Linked", str(e)
     except Exception as e:
