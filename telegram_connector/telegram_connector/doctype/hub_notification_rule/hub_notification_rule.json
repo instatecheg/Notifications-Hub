@@ -27,13 +27,41 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "col_main",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "event",
    "fieldtype": "Select",
    "label": "Event",
-   "options": "New\nSave\nSubmit\nCancel",
+   "options": "New\nSave\nSubmit\nCancel\nValue Change\nDays Before\nDays After",
    "default": "Submit",
    "reqd": 1,
    "in_list_view": 1
+  },
+  {
+   "fieldname": "value_changed",
+   "fieldtype": "Autocomplete",
+   "label": "Value Changed",
+   "depends_on": "eval:doc.event=='Value Change'",
+   "mandatory_depends_on": "eval:doc.event=='Value Change'",
+   "description": "Send when this field changes, e.g. status. In the message use {{ old_value }} and {{ new_value }}."
+  },
+  {
+   "fieldname": "date_changed",
+   "fieldtype": "Autocomplete",
+   "label": "Reference Date",
+   "depends_on": "eval:['Days Before','Days After'].includes(doc.event)",
+   "mandatory_depends_on": "eval:['Days Before','Days After'].includes(doc.event)",
+   "description": "Date field the days are counted from, e.g. due_date"
+  },
+  {
+   "fieldname": "days_in_advance",
+   "fieldtype": "Int",
+   "label": "Days",
+   "default": "1",
+   "depends_on": "eval:['Days Before','Days After'].includes(doc.event)",
+   "description": "Checked once a day"
   },
   {
    "fieldname": "channel",
@@ -45,42 +73,98 @@
    "in_list_view": 1
   },
   {
+   "fieldname": "sec_cond",
+   "fieldtype": "Section Break",
+   "label": "Conditions",
+   "description": "Send only when all of these are true. Leave empty to always send."
+  },
+  {
+   "fieldname": "conditions",
+   "fieldtype": "Table",
+   "label": "Conditions",
+   "options": "Hub Rule Condition"
+  },
+  {
+   "fieldname": "sec_adv_cond",
+   "fieldtype": "Section Break",
+   "label": "Advanced Condition (Python)",
+   "collapsible": 1,
+   "collapsible_depends_on": "condition"
+  },
+  {
    "fieldname": "condition",
    "fieldtype": "Code",
-   "label": "Condition",
-   "options": "PythonExpression"
+   "label": "Python Condition",
+   "options": "PythonExpression",
+   "description": "Optional, for developers. Example: doc.grand_total > 1000. Checked together with the table above."
   },
   {
    "fieldname": "sec_rec",
    "fieldtype": "Section Break",
-   "label": "Recipient",
-   "collapsible": 1
+   "label": "Recipients"
+  },
+  {
+   "fieldname": "send_to_document_contact",
+   "fieldtype": "Check",
+   "default": "1",
+   "label": "Send to the document's customer / contact",
+   "description": "The mobile number of the customer (or other party) on the document"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Also Send To",
+   "options": "Hub Rule Recipient"
+  },
+  {
+   "fieldname": "groups",
+   "fieldtype": "Table MultiSelect",
+   "label": "Groups",
+   "options": "Hub Rule Group",
+   "description": "Telegram / WhatsApp groups (create them in Hub Chat Group). Each group gets the message on its own channel."
+  },
+  {
+   "fieldname": "sec_contact",
+   "fieldtype": "Section Break",
+   "label": "Customer / Contact Fields",
+   "collapsible": 1,
+   "depends_on": "send_to_document_contact",
+   "description": "Filled automatically from the document type. Change only if the mobile number is stored elsewhere."
   },
   {
    "fieldname": "mobile_field",
    "fieldtype": "Data",
-   "label": "Mobile Field"
+   "label": "Mobile Field",
+   "description": "Mobile field in the document, e.g. contact_mobile"
   },
   {
    "fieldname": "party_field",
    "fieldtype": "Data",
-   "label": "Party Field"
+   "label": "Party Field",
+   "description": "Party field in the document, e.g. customer"
+  },
+  {
+   "fieldname": "col_contact",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "party_doctype",
    "fieldtype": "Link",
    "label": "Party Doctype",
-   "options": "DocType"
+   "options": "DocType",
+   "description": "Example: Customer"
   },
   {
    "fieldname": "party_mobile_field",
    "fieldtype": "Data",
-   "label": "Party Mobile Field"
+   "label": "Party Mobile Field",
+   "description": "Mobile field in the party, e.g. mobile_no"
   },
   {
    "fieldname": "prefer_party_mobile",
    "fieldtype": "Check",
-   "label": "Prefer Party Mobile"
+   "label": "Prefer Party Mobile",
+   "description": "Use the party's number before the document's number"
   },
   {
    "fieldname": "sec_msg",
@@ -92,7 +176,8 @@
    "fieldtype": "Code",
    "label": "Message",
    "options": "Jinja",
-   "reqd": 1
+   "reqd": 1,
+   "description": "Click Template > Insert Field to add document values without code. Also available: {{ changed_by }}, {{ old_value }}, {{ new_value }}."
   },
   {
    "fieldname": "attach_print",

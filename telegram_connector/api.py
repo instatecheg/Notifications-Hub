@@ -41,6 +41,21 @@ def get_enabled_channels():
 
 
 @frappe.whitelist()
+def get_fields(doctype):
+    """Fields of a DocType for the no-code pickers in Hub Notification Rule."""
+    frappe.has_permission("Hub Notification Rule", "write", throw=True)
+    skip = {"Section Break", "Column Break", "Tab Break", "HTML", "Button", "Table", "Table MultiSelect",
+            "Image", "Fold", "Heading", "Attach Image", "Signature", "Geolocation"}
+    std = [{"value": "name", "label": "ID (name)", "fieldtype": "Data"},
+           {"value": "owner", "label": "Created By (owner)", "fieldtype": "Link"},
+           {"value": "modified_by", "label": "Last Updated By (modified_by)", "fieldtype": "Link"},
+           {"value": "docstatus", "label": "Document Status (docstatus: 0 Draft, 1 Submitted, 2 Cancelled)", "fieldtype": "Int"}]
+    out = [{"value": f.fieldname, "label": f"{f.label or f.fieldname} ({f.fieldname})", "fieldtype": f.fieldtype}
+           for f in frappe.get_meta(doctype).fields if f.fieldtype not in skip]
+    return out + std
+
+
+@frappe.whitelist()
 def get_preset(doctype):
     """Ready-made recipient fields + message for the Hub Notification Rule form."""
     frappe.has_permission("Hub Notification Rule", "write", throw=True)
@@ -54,7 +69,8 @@ def preview_message(doctype, name, message):
     """Render a message template against a real document (Preview button)."""
     frappe.has_permission("Hub Notification Rule", "write", throw=True)
     frappe.has_permission(doctype, "read", name, throw=True)
-    return frappe.render_template(message or "", {"doc": frappe.get_doc(doctype, name)})
+    sample = {"old_value": "(old value)", "new_value": "(new value)", "field_label": "(field)"}
+    return frappe.render_template(message or "", sender.template_context(frappe.get_doc(doctype, name), sample))
 
 
 def _pick_rule(doctype, channel):
@@ -90,7 +106,7 @@ def notify_customer(doctype, name, channel=None):
     results = []
     for ch in targets:
         rule = _pick_rule(doctype, ch)
-        for log in sender.process_rule(rule, doctype, name, force=True, channels=[ch]):
+        for log in sender.process_rule(rule, doctype, name, force=True, channels=[ch], contact_only=True):
             st, err = frappe.db.get_value("Hub Message Log", log, ["status", "error"])
             results.append({"channel": ch, "status": st, "error": err, "log": log})
     return {"results": results}

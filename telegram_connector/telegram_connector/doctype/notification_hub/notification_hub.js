@@ -77,6 +77,14 @@ const GUIDES = {
 <li>Check <b>Hub Message Log</b> for the status of each message. Use <b>Retry</b> after fixing a problem.</li>
 </ol>
 
+<h5>Step 6: WhatsApp groups</h5>
+<ol>
+<li>Groups need <b>API v2</b>. The connected WhatsApp number must be a member of the group.</li>
+<li>Click <b>WhatsApp Diagnostics</b>: it tries to list your groups. Copy the group id ending with <code>@g.us</code> (or take it from the Wapilot dashboard).</li>
+<li>Create a <b>Hub Chat Group</b> with Channel = WhatsApp and that id. Test it in the <b>Test</b> tab by putting the id in Test Recipient.</li>
+<li>In a <b>Hub Notification Rule</b>, pick the group under <b>Recipients &gt; Groups</b>.</li>
+</ol>
+
 <div class="tip"><b>PDF attachments:</b> Wapilot downloads the PDF from a URL, so your site must be reachable from the internet (set <code>host_name</code> in <code>site_config.json</code>). A site that only works on a local address such as <code>192.168.x.x</code> can send text but not PDFs.</div>
 </div>`,
 	},

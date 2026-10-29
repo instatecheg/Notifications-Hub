@@ -1,0 +1,61 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Rule Recipient",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "recipient_type",
+   "fieldtype": "Select",
+   "label": "Send To",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 3,
+   "options": "User\nRole\nMobile Number\nDocument Field",
+   "default": "User"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "in_list_view": 1,
+   "columns": 4,
+   "depends_on": "eval:doc.recipient_type=='User'",
+   "mandatory_depends_on": "eval:doc.recipient_type=='User'"
+  },
+  {
+   "fieldname": "role",
+   "fieldtype": "Link",
+   "label": "Role",
+   "options": "Role",
+   "in_list_view": 1,
+   "columns": 3,
+   "depends_on": "eval:doc.recipient_type=='Role'",
+   "mandatory_depends_on": "eval:doc.recipient_type=='Role'"
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Mobile Number",
+   "options": "Phone",
+   "in_list_view": 1,
+   "columns": 3,
+   "depends_on": "eval:doc.recipient_type=='Mobile Number'",
+   "mandatory_depends_on": "eval:doc.recipient_type=='Mobile Number'"
+  },
+  {
+   "fieldname": "document_field",
+   "fieldtype": "Autocomplete",
+   "label": "Document Field",
+   "in_list_view": 1,
+   "columns": 3,
+   "depends_on": "eval:doc.recipient_type=='Document Field'",
+   "mandatory_depends_on": "eval:doc.recipient_type=='Document Field'",
+   "description": "A field of the document that holds a mobile number or a User (e.g. owner)."
+  }
+ ],
+ "istable": 1,
+ "permissions": [],
+ "editable_grid": 1
+}

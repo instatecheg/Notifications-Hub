@@ -1,0 +1,37 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Rule Condition",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Autocomplete",
+   "label": "Field",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 4
+  },
+  {
+   "fieldname": "operator",
+   "fieldtype": "Select",
+   "label": "Operator",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "options": "=\n!=\n>\n<\n>=\n<=\nin\nnot in\nlike\nnot like\nis set\nis not set",
+   "default": "="
+  },
+  {
+   "fieldname": "value",
+   "fieldtype": "Data",
+   "label": "Value",
+   "in_list_view": 1,
+   "columns": 4,
+   "description": "For in / not in, separate values with commas. Not needed for is set / is not set."
+  }
+ ],
+ "istable": 1,
+ "permissions": [],
+ "editable_grid": 1
+}

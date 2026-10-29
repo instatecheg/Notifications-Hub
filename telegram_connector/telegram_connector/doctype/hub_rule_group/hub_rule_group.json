@@ -1,0 +1,19 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Rule Group",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "fields": [
+  {
+   "fieldname": "group",
+   "fieldtype": "Link",
+   "label": "Group",
+   "options": "Hub Chat Group",
+   "reqd": 1,
+   "in_list_view": 1
+  }
+ ],
+ "istable": 1,
+ "permissions": [],
+ "editable_grid": 1
+}

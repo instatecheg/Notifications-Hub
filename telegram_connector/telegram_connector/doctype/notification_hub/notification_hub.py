@@ -122,7 +122,8 @@ class NotificationHub(Document):
         if (self.test_channel or "Telegram") == "WhatsApp":
             if not self.whatsapp_enabled:
                 frappe.throw("Enable WhatsApp first")
-            sender.wa_send(sender.normalize_phone(r, self.default_country_code), text)
+            to = r if sender.is_wa_group(r) else sender.normalize_phone(r, self.default_country_code)
+            sender.wa_send(to, text)
             return "✅ Sent"
         if self.mode == "Bot":
             sender.send_text(r, None, text)
@@ -236,6 +237,26 @@ class NotificationHub(Document):
                 ok("Put the working name in Media Endpoint (Advanced) and set Media Payload to the fields shown in its reply")
             else:
                 warn("No common media endpoint was found. Check the Wapilot API documentation (send file / document) for the exact URL")
+
+            # ---- WhatsApp groups (read only) ----
+            rows.append("<b>WhatsApp groups</b> (copy a group id ending with @g.us into Hub Chat Group):")
+            listed = False
+            for name in ("groups", "get-groups", "chats"):
+                try:
+                    rr = requests.get(f"{root}/{name}", headers=hdr, timeout=15)
+                except Exception as e:
+                    warn(f"{name}: {type(e).__name__}")
+                    continue
+                if rr.status_code == 200 and "@g.us" in rr.text:
+                    ids = sorted(set(re.findall(r"[\w-]+@g\.us", rr.text)))
+                    ok(f"Found {len(ids)} group(s) via {esc(name)}:<br>" + "<br>".join(f"<code>{esc(i)}</code>" for i in ids[:50]))
+                    rows.append(f"Full reply: <code>{esc(rr.text[:1500])}</code>")
+                    listed = True
+                    break
+                rows.append(f"&nbsp;&nbsp;– {esc(name)}: HTTP {rr.status_code}")
+            if not listed:
+                warn("Could not list groups automatically. Get the group id (…@g.us) from the Wapilot dashboard, "
+                     "then test it here with Test Channel = WhatsApp and the group id as Test Recipient")
             return out()
 
         # ---------------- Classic SDK ----------------

@@ -7,6 +7,22 @@
  "sort_order": "DESC",
  "fields": [
   {
+   "fieldname": "tab_general",
+   "fieldtype": "Tab Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "sec_main",
+   "fieldtype": "Section Break",
+   "label": "General"
+  },
+  {
+   "fieldname": "default_country_code",
+   "fieldtype": "Data",
+   "label": "Default Country Code",
+   "default": "20"
+  },
+  {
    "fieldname": "sec_guides",
    "fieldtype": "Section Break",
    "label": "Setup Guides (click for step-by-step instructions)"
@@ -44,9 +60,14 @@
    "label": "Troubleshooting"
   },
   {
-   "fieldname": "sec_main",
+   "fieldname": "tab_telegram",
+   "fieldtype": "Tab Break",
+   "label": "Telegram"
+  },
+  {
+   "fieldname": "sec_tg",
    "fieldtype": "Section Break",
-   "label": "General"
+   "label": "Telegram"
   },
   {
    "fieldname": "enabled",
@@ -54,9 +75,8 @@
    "label": "Enable Telegram"
   },
   {
-   "fieldname": "whatsapp_enabled",
-   "fieldtype": "Check",
-   "label": "Enable WhatsApp"
+   "fieldname": "col_tg",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "mode",
@@ -64,19 +84,14 @@
    "label": "Mode",
    "options": "Bot\nUser Account",
    "default": "Bot",
-   "reqd": 1
-  },
-  {
-   "fieldname": "default_country_code",
-   "fieldtype": "Data",
-   "label": "Default Country Code",
-   "default": "20"
+   "reqd": 1,
+   "depends_on": "enabled"
   },
   {
    "fieldname": "sec_bot",
    "fieldtype": "Section Break",
    "label": "Bot",
-   "depends_on": "eval:doc.mode=='Bot'"
+   "depends_on": "eval:doc.enabled && doc.mode=='Bot'"
   },
   {
    "fieldname": "bot_token",
@@ -90,18 +105,22 @@
    "read_only": 1
   },
   {
-   "fieldname": "group_chat_id",
-   "fieldtype": "Data",
-   "label": "Group Chat ID",
-   "description": "Telegram group chat id (negative number, e.g. -100...). Delivery Trip / Transportation Request details are also posted here. Bot mode only.",
-   "default": "-5524050749"
-  },
-  {
    "fieldname": "link_method",
    "fieldtype": "Select",
    "label": "Link Method",
    "options": "Polling\nWebhook",
    "default": "Polling"
+  },
+  {
+   "fieldname": "col_bot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "group_chat_id",
+   "fieldtype": "Data",
+   "label": "Driver Notifications Group Chat ID",
+   "description": "Telegram group that receives Delivery Trip / Transportation Request details. For other groups use Hub Chat Group.",
+   "default": "-5524050749"
   },
   {
    "fieldname": "btn_test_connection",
@@ -130,7 +149,7 @@
    "fieldname": "sec_acc",
    "fieldtype": "Section Break",
    "label": "User Account",
-   "depends_on": "eval:doc.mode=='User Account'"
+   "depends_on": "eval:doc.enabled && doc.mode=='User Account'"
   },
   {
    "fieldname": "api_id",
@@ -151,6 +170,10 @@
    "fieldname": "btn_send_code",
    "fieldtype": "Button",
    "label": "Send Code"
+  },
+  {
+   "fieldname": "col_acc",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "login_code",
@@ -180,9 +203,24 @@
    "read_only": 1
   },
   {
+   "fieldname": "tab_whatsapp",
+   "fieldtype": "Tab Break",
+   "label": "WhatsApp"
+  },
+  {
+   "fieldname": "sec_wa_main",
+   "fieldtype": "Section Break",
+   "label": "WhatsApp"
+  },
+  {
+   "fieldname": "whatsapp_enabled",
+   "fieldtype": "Check",
+   "label": "Enable WhatsApp"
+  },
+  {
    "fieldname": "sec_wa",
    "fieldtype": "Section Break",
-   "label": "WhatsApp (Wapilot)",
+   "label": "Wapilot",
    "depends_on": "eval:doc.whatsapp_enabled"
   },
   {
@@ -194,7 +232,12 @@
    "fieldname": "wapilot_base_url",
    "fieldtype": "Data",
    "label": "Wapilot Base URL",
-   "default": "https://app.wapilot.io"
+   "default": "https://app.wapilot.io",
+   "description": "API v2: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+  },
+  {
+   "fieldname": "col_wa",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "wapilot_phone_format",
@@ -231,9 +274,14 @@
    "label": "Media Payload (JSON)"
   },
   {
+   "fieldname": "tab_test",
+   "fieldtype": "Tab Break",
+   "label": "Test"
+  },
+  {
    "fieldname": "sec_test",
    "fieldtype": "Section Break",
-   "label": "Test"
+   "label": "Send a Test Message"
   },
   {
    "fieldname": "test_channel",
@@ -245,7 +293,12 @@
   {
    "fieldname": "test_recipient",
    "fieldtype": "Data",
-   "label": "Test Recipient"
+   "label": "Test Recipient",
+   "description": "Mobile number, a Telegram chat id, or a WhatsApp group id ending with @g.us"
+  },
+  {
+   "fieldname": "col_test",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "test_text",
