@@ -113,7 +113,7 @@ def region_for_user(user):
 
 
 # ---------------- Readable error diagnosis ----------------
-MARK = "❌"
+MARK = "Issue:"
 
 
 def explain(channel, exc, status=None, body=None):
@@ -130,53 +130,53 @@ def explain(channel, exc, status=None, body=None):
     where = hint = None
     if channel == "WhatsApp":
         if "not installed" in low:
-            where, hint = "Python package wapilot-sdk", "It is not installed on the server. Run: ./env/bin/pip install wapilot-sdk then bench restart."
+            where, hint = "Python package wapilot-sdk", "The package is not installed on the server. Please run ./env/bin/pip install wapilot-sdk, then bench restart."
         elif "token is not set" in low:
-            where, hint = "Wapilot API Token (Notification Hub)", "The token is empty. Paste it from your Wapilot dashboard and save."
+            where, hint = "Wapilot API Token", "The token is empty. Please copy it from the Wapilot dashboard into the WhatsApp tab of Notification Hub and save."
         elif status in (401, 403):
-            where, hint = "Wapilot API Token", "The token is wrong, expired or has no permission. Generate a new one in the Wapilot dashboard and save it in Notification Hub."
+            where, hint = "Wapilot API Token", "The token is invalid, expired or lacks permission. Please generate a new token in the Wapilot dashboard and save it in Notification Hub."
         elif status == 405:
-            where, hint = "Wapilot Base URL (wrong endpoint)", "The URL exists but does not accept this request type. For API v2 use the full send URL: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            where, hint = "Wapilot Base URL", "The URL does not accept this type of request. For API v2 please use the full send URL: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
         elif status == 404 and is_html:
-            where, hint = "Wapilot Base URL", "The URL reaches a website page, not the API. Classic mode: use the domain only (https://app.wapilot.io). API v2: use https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            where, hint = "Wapilot Base URL", "The URL points to a web page, not to the API. Classic mode requires the domain only (https://app.wapilot.io). API v2 requires https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
         elif status == 404 or "not_found" in low:
-            where, hint = "Wapilot account, instance ID or send endpoint", (
-                "Wapilot says the resource was not found. Possible causes: (1) the INSTANCE ID inside the URL is wrong, "
-                "(2) no WhatsApp number is connected/active in your Wapilot account, (3) the send endpoint is wrong. "
-                "Click WhatsApp Diagnostics in Notification Hub."
+            where, hint = "Wapilot instance or send endpoint", (
+                "Wapilot could not find the requested resource. Possible causes: (1) the instance ID in the Base URL is incorrect, "
+                "(2) no WhatsApp number is connected and active in the Wapilot account, (3) the send endpoint is incorrect. "
+                "Please run WhatsApp Diagnostics in Notification Hub."
             )
         elif status in (400, 422):
             where, hint = "Phone number or message data", (
-                "Wapilot rejected the data. Check the number is in international format and the message is not empty. "
-                "If the technical details name a missing field, adjust Text Message Payload in Advanced (API v2 payloads)."
+                "Wapilot rejected the request data. Please verify that the number is in international format and that the message is not empty. "
+                "If the technical details name a missing field, please adjust the Text Message Payload under Advanced (API v2 payloads)."
             )
         elif status == 429:
-            where, hint = "Wapilot rate limit", "Too many messages in a short time. Wait a bit, then click Retry."
+            where, hint = "Wapilot rate limit", "Too many messages were sent in a short period. Please wait, then click Retry."
         elif status and status >= 500:
-            where, hint = "Wapilot server", "A temporary problem on their side. Try again later."
+            where, hint = "Wapilot server", "Wapilot reported a temporary server error. Please try again later."
         elif net:
-            where, hint = "Internet connection or Wapilot Base URL", "The server could not reach Wapilot. Check the internet/DNS and that the URL is typed correctly."
+            where, hint = "Internet connection or Wapilot Base URL", "The server could not reach Wapilot. Please verify the internet connection, the DNS settings and the Base URL."
     else:
         if "unauthorized" in low or low.strip() == "not found":
-            where, hint = "Bot Token", "Telegram rejected the token. Copy it again from @BotFather and save it in Notification Hub."
+            where, hint = "Telegram Bot Token", "Telegram rejected the token. Please copy it again from @BotFather and save it in Notification Hub."
         elif "chat not found" in low:
-            where, hint = "Customer link (Chat ID)", "The customer has not pressed Start on the bot, or the Chat ID is wrong. Send them the link from Telegram Link."
+            where, hint = "Telegram link (chat id)", "The recipient has not started the bot, or the chat id is incorrect. Please send them their link from Telegram Link."
         elif "blocked by the user" in low:
-            where, hint = "The customer", "The customer blocked the bot. They must unblock it and press Start again."
+            where, hint = "Recipient", "The recipient has blocked the bot. They must unblock it and press Start again."
         elif "too many requests" in low or "flood" in low:
-            where, hint = "Telegram rate limit", "Telegram limited sending temporarily. Wait the time shown in the details, then click Retry."
+            where, hint = "Telegram rate limit", "Telegram has temporarily limited sending. Please wait for the period shown in the technical details, then click Retry."
         elif "phonenumberinvalid" in low:
-            where, hint = "Phone number", "The number is not valid. Check it is complete and in international format."
+            where, hint = "Phone number", "The number is not valid. Please verify that it is complete and in international format."
         elif "apiidinvalid" in low or "api_id" in low or "api_hash" in low:
-            where, hint = "api_id / api_hash", "The keys are wrong. Copy them again from my.telegram.org."
+            where, hint = "api_id / api_hash", "The credentials are incorrect. Please copy them again from my.telegram.org."
         elif any(k in low for k in ("authkey", "session", "not authorized", "sessionrevoked")):
-            where, hint = "Telegram account session", "The session expired or was revoked. Log the account in again (Send Code, then Verify & Login)."
+            where, hint = "Telegram account session", "The session has expired or was revoked. Please log in again (Send Code, then Verify & Login)."
         elif net:
-            where, hint = "Connection to Telegram", "The server could not reach Telegram. Check the internet or proxy."
+            where, hint = "Connection to Telegram", "The server could not reach Telegram. Please verify the internet connection or proxy settings."
     if not where:
-        where, hint = "Unknown", "See the technical details below and send them to your system administrator."
+        where, hint = "Unidentified", "Please review the technical details below and contact your system administrator if the problem persists."
     detail = raw if not body or is_html else f"{raw} | {str(body)[:300]}"
-    return f"{MARK} Problem in: {where}\nCause and fix: {hint}\nTechnical details: {detail[:600]}"
+    return f"{MARK} {where}\nResolution: {hint}\nTechnical details: {detail[:600]}"
 
 
 def notify_failure(log, status, error):
@@ -188,7 +188,8 @@ def notify_failure(log, status, error):
         users.add(frappe.session.user)
         users = [u for u in users if u != "Guest" and frappe.db.get_value("User", u, "enabled")]
         warn = status == "Sent"
-        subject = f"{log.channel or 'Telegram'}: {'Sent with warning' if warn else status} — {log.reference_doctype} {log.reference_name}"
+        outcome = {"Sent": "delivered with a warning", "Not Linked": "not delivered (recipient not linked)"}.get(status, "delivery failed")
+        subject = f"{log.channel or 'Telegram'} message {outcome}: {log.reference_doctype} {log.reference_name}"
         html = frappe.utils.escape_html(error or "").replace("\n", "<br>")
         for u in users:
             frappe.get_doc({
@@ -206,7 +207,7 @@ def notify_failure(log, status, error):
 def bot_call(method, data=None, files=None):
     token = settings().get_password("bot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Bot Token is not set")
+        raise frappe.ValidationError("The Telegram Bot Token is not set. Please enter it in the Telegram tab of Notification Hub.")
     try:
         r = requests.post(f"https://api.telegram.org/bot{token}/{method}", data=data, files=files, timeout=30)
         j = r.json()
@@ -229,20 +230,20 @@ def run_async(coro):
 
 def _creds(s):
     if not s.api_id:
-        raise frappe.ValidationError("api_id is not set")
+        raise frappe.ValidationError("The api_id is not set. Please enter it in the Telegram tab of Notification Hub.")
     api_hash = s.get_password("api_hash", raise_exception=False)
     if not api_hash:
-        raise frappe.ValidationError("api_hash is not set")
+        raise frappe.ValidationError("The api_hash is not set. Please enter it in the Telegram tab of Notification Hub.")
     try:
         return int(str(s.api_id).strip()), api_hash
     except ValueError:
-        raise frappe.ValidationError("api_id must contain digits only")
+        raise frappe.ValidationError("The api_id must contain digits only.")
 
 
 def _session(s):
     sess = s.get_password("session_string", raise_exception=False)
     if not sess:
-        raise frappe.ValidationError("The account is not logged in yet (Send Code, then Verify)")
+        raise frappe.ValidationError("The Telegram account is not logged in. Please click Send Code, then Verify & Login.")
     return sess
 
 
@@ -261,7 +262,7 @@ async def _resolve(c, phone):
 
     res = await c(ImportContactsRequest([InputPhoneContact(0, phone, "ERP", "")]))
     if not res.users:
-        raise NotLinked("This number is not registered on Telegram, or its privacy settings prevent access")
+        raise NotLinked("This number is not registered on Telegram, or its privacy settings do not allow contact by phone number.")
     return res.users[0]
 
 
@@ -269,7 +270,7 @@ async def _user_send(api_id, api_hash, session, phone, text, pdf, pdf_name):
     c = await _connect(api_id, api_hash, session)
     try:
         if not await c.is_user_authorized():
-            raise frappe.ValidationError("The session has expired. Please log in to the account again")
+            raise frappe.ValidationError("The Telegram session has expired. Please log in to the account again.")
         u = await _resolve(c, phone)
         await c.send_message(u, text)
         if pdf:
@@ -322,7 +323,7 @@ async def _user_me(api_id, api_hash, session):
     c = await _connect(api_id, api_hash, session)
     try:
         if not await c.is_user_authorized():
-            raise frappe.ValidationError("The session is not logged in")
+            raise frappe.ValidationError("The Telegram session is not logged in. Please click Send Code, then Verify & Login.")
         me = await c.get_me()
         return f"{me.first_name or ''} ({me.phone})"
     finally:
@@ -347,7 +348,7 @@ async def _verify(api_id, api_hash, session, phone, code, code_hash, pw):
             await c.sign_in(phone=phone, code=code, phone_code_hash=code_hash)
         except SessionPasswordNeededError:
             if not pw:
-                raise frappe.ValidationError("This account has Two-Step Verification enabled: enter the password in the Two Fa Password field")
+                raise frappe.ValidationError("This account has Two-Step Verification enabled. Please enter the password in the Two Fa Password field.")
             await c.sign_in(password=pw)
         me = await c.get_me()
         return c.session.save(), f"{me.first_name or ''} ({me.phone})"
@@ -455,49 +456,291 @@ def poll_updates():
 
 
 # ---------------- Notifications ----------------
-def process_rule(rule, ref_doctype, ref_name, force=False, channels=None):
-    """Create + deliver the message(s) for a rule. Returns the list of Hub Message Log names.
+# A notification is a row of Notification Hub > Notifications (child doctype Hub Notification).
+def _lines(text):
+    return [x.strip() for x in (text or "").splitlines() if x.strip()]
 
-    force=True: manual send (ignores the condition and raises if no channel is enabled).
-    channels: limit to specific channels (e.g. ["WhatsApp"]); default = the rule's channel(s).
-    """
-    if isinstance(rule, str):
-        rule = frappe.get_doc("Hub Notification Rule", rule)
-    doc = frappe.get_doc(ref_doctype, ref_name)
-    if rule.condition and not force:
-        try:
-            if not frappe.safe_eval(rule.condition, None, {"doc": doc}):
-                return []
-        except Exception:
-            frappe.log_error(title="Telegram: bad condition", message=f"{rule.name}\n{frappe.get_traceback()}")
-            return []
-    active = [c for c in (channels or rule_channels(rule)) if channel_enabled(c)]
-    if not active:
-        if force:
-            frappe.throw("The selected channel is not enabled in Notification Hub")
+
+def get_notification(name):
+    """Hub Notification row by its row name."""
+    for row in settings().notifications:
+        if row.name == name:
+            return row
+    return None
+
+
+def get_template(name, s=None):
+    s = s or settings()
+    for t in s.templates:
+        if t.template_name == name:
+            return t.message
+    return None
+
+
+def rule_message(rule, s=None):
+    """The notification's chosen template, or its own message."""
+    return (rule.get("template") and get_template(rule.template, s)) or rule.get("message") or ""
+
+
+def rule_filters(rule):
+    import json
+
+    try:
+        return json.loads(rule.get("filters") or "[]") or []
+    except ValueError:
         return []
-    cc = settings().default_country_code
-    party_type = rule.party_doctype
-    party = doc.get(rule.party_field) if rule.party_field else None
-    p_doc = doc.get(rule.mobile_field) if rule.mobile_field else None
+
+
+def rule_matches(rule, doc):
+    """True when every condition (filter rows) and the optional Python condition hold."""
+    meta = frappe.get_meta(doc.doctype)
+    for f in rule_filters(rule):
+        # filter rows from the UI: [doctype, fieldname, operator, value, ...]
+        if not _condition_holds(doc, meta, f[1], f[2], f[3] if len(f) > 3 else None):
+            return False
+    if rule.get("condition"):
+        return bool(frappe.safe_eval(rule.condition, None, {"doc": doc}))
+    return True
+
+
+def _condition_holds(doc, meta, fieldname, op, want):
+    from frappe.utils import compare
+
+    actual = doc.get(fieldname)
+    df = meta.get_field(fieldname)
+    fieldtype = df.fieldtype if df else _guess_fieldtype(actual)
+    if op in ("in", "not in") and isinstance(want, str):
+        want = [v.strip() for v in want.split(",")]
+    return compare(actual, op, want, fieldtype)
+
+
+def _guess_fieldtype(value):
+    """Standard fields (docstatus, idx, creation...) have no docfield: cast by the value's type."""
+    import datetime
+    from decimal import Decimal
+
+    if isinstance(value, bool | int | float | Decimal):
+        return "Float"
+    if isinstance(value, datetime.datetime):
+        return "Datetime"
+    if isinstance(value, datetime.date):
+        return "Date"
+    return None
+
+
+def template_context(doc, extra=None):
+    """Values available in a message besides doc."""
+    extra = extra or {}
+    user = extra.get("changed_by") or frappe.session.user
+    return {
+        "doc": doc,
+        "changed_by": frappe.db.get_value("User", user, "full_name") or user,
+        "changed_by_user": user,
+        "old_value": extra.get("old_value", ""),
+        "new_value": extra.get("new_value", ""),
+        "field_label": extra.get("field_label", ""),
+        "subject": extra.get("subject", ""),
+        "link": extra.get("link") or (frappe.utils.get_url_to_form(doc.doctype, doc.name) if doc else ""),
+    }
+
+
+def _contact_target(rule, doc):
+    """The customer / party of the document."""
+    party_type = rule.get("party_doctype")
+    party = doc.get(rule.party_field) if rule.get("party_field") else None
+    p_doc = doc.get(rule.mobile_field) if rule.get("mobile_field") else None
     p_party = None
-    if party_type and party and rule.party_mobile_field:
+    if party_type and party and rule.get("party_mobile_field"):
         p_party = frappe.db.get_value(party_type, party, rule.party_mobile_field)
-    phone = (p_party or p_doc) if rule.prefer_party_mobile else (p_doc or p_party)
-    message = frappe.render_template(rule.message, {"doc": doc})
-    names = []
-    for ch in active:
+    phone = (p_party or p_doc) if rule.get("prefer_party_mobile") else (p_doc or p_party)
+    return {"party_type": party_type if party else None, "party": party, "mobile_no": phone}
+
+
+def _user_target(user):
+    return {"party_type": "User", "party": user, "mobile_no": frappe.db.get_value("User", user, "mobile_no")}
+
+
+def role_users(role):
+    users = frappe.get_all("Has Role", filters={"role": role, "parenttype": "User"}, pluck="parent")
+    if not users:
+        return []
+    return [u for u in frappe.get_all("User", filters={"name": ("in", users), "enabled": 1, "user_type": "System User"},
+                                      pluck="name") if u not in ("Administrator", "Guest")]
+
+
+def _people(rule, doc, contact_only=False):
+    people = []
+    # the built-in preset (Notify Customer without a configured row) has no send_to_contact: it sends to the contact
+    if rule.get("send_to_contact") in (None, 1) or contact_only:
+        people.append(_contact_target(rule, doc))
+    if contact_only:
+        return people
+    people += [_user_target(u) for u in _lines(rule.get("users"))]
+    for role in _lines(rule.get("roles")):
+        people += [_user_target(u) for u in role_users(role)]
+    people += [{"party_type": None, "party": None, "mobile_no": m} for m in _lines(rule.get("mobile_numbers"))]
+    for f in _lines(rule.get("document_fields")):
+        v = doc.get(f)
+        if not v:
+            continue
+        if frappe.db.exists("User", v):
+            people.append(_user_target(v))
+        else:
+            people.append({"party_type": None, "party": None, "mobile_no": v})
+    return people
+
+
+def _group_targets(names, s=None):
+    s = s or settings()
+    wanted = set(names)
+    return [{"channel": g.channel, "chat_id": g.chat_id.strip(), "party_type": None, "party": None, "mobile_no": ""}
+            for g in s.groups if g.group_name in wanted and g.enabled and channel_enabled(g.channel, s)]
+
+
+def send_to_targets(targets, message, ref_doctype, ref_name, notification=None, attach_print=0,
+                    print_format=None, notify=True):
+    """One Hub Message Log per target, delivered right away. Duplicate targets are skipped."""
+    cc = settings().default_country_code
+    names, seen = [], set()
+    for t in targets:
+        mobile = normalize_phone(t.get("mobile_no"), cc) if not t.get("chat_id") else ""
+        if t.get("chat_id"):
+            key = (t["channel"], t["chat_id"])
+        elif t.get("party"):
+            key = (t["channel"], t["party_type"], t["party"])
+        else:
+            key = (t["channel"], mobile)
+        if key in seen:
+            continue
+        seen.add(key)
         log = frappe.get_doc({
-            "doctype": "Hub Message Log", "notification": rule.name, "status": "Queued", "channel": ch,
+            "doctype": "Hub Message Log", "notification": notification, "status": "Queued", "channel": t["channel"],
             "reference_doctype": ref_doctype, "reference_name": ref_name,
-            "party_type": party_type if party else None, "party": party,
-            "mobile_no": normalize_phone(phone, cc), "message": message,
-            "attach_print": rule.attach_print, "print_format": rule.print_format,
+            "party_type": t.get("party_type"), "party": t.get("party"),
+            "mobile_no": mobile, "chat_id": t.get("chat_id"), "message": message,
+            "attach_print": attach_print, "print_format": print_format,
         }).insert(ignore_permissions=True)
         frappe.db.commit()
-        deliver(log.name, notify=not force)
+        deliver(log.name, notify=notify)
         names.append(log.name)
     return names
+
+
+def process_rule(rule, ref_doctype, ref_name, force=False, channels=None, extra=None, contact_only=False):
+    """Create + deliver the message(s) of a notification. Returns the list of Hub Message Log names.
+
+    rule: a Hub Notification row, its row name, or a preset dict.
+    force=True: manual send (ignores the conditions and raises if no channel is enabled).
+    channels: limit to specific channels (e.g. ["WhatsApp"]); default = the notification's channel(s).
+    extra: event details for the message (changed_by, old_value, new_value, field_label).
+    contact_only: send only to the document's customer / contact (Notify Customer button).
+    """
+    s = settings()
+    if isinstance(rule, str):
+        rule = get_notification(rule)
+        if not rule:
+            return []
+    doc = frappe.get_doc(ref_doctype, ref_name)
+    if not force:
+        try:
+            if not rule_matches(rule, doc):
+                return []
+        except Exception:
+            frappe.log_error(title="Notification Hub: bad condition",
+                             message=f"{rule.get('title')}\n{frappe.get_traceback()}")
+            return []
+    active = [c for c in (channels or rule_channels(rule)) if channel_enabled(c, s)]
+    groups = [] if contact_only else _group_targets(_lines(rule.get("chat_groups")), s)
+    if not active and not groups:
+        if force:
+            frappe.throw("The selected channel is not enabled. Please enable it in Notification Hub.", title="Channel Not Enabled")
+        return []
+    message = frappe.render_template(rule_message(rule, s), template_context(doc, extra))
+    targets = [dict(p, channel=ch) for ch in active for p in _people(rule, doc, contact_only)] + groups
+    return send_to_targets(targets, message, ref_doctype, ref_name, notification=rule.get("title"),
+                           attach_print=rule.get("attach_print"), print_format=rule.get("print_format"),
+                           notify=not force)
+
+
+def run_date_rules():
+    """Daily: notifications with event Days Before / Days After."""
+    from frappe.utils import add_days, nowdate
+
+    s = settings()
+    if not enabled_channels():
+        return
+    for rule in s.notifications:
+        if not (rule.enabled and rule.event in ("Days Before", "Days After") and rule.date_changed):
+            continue
+        days = rule.days_in_advance or 0
+        day = add_days(nowdate(), days if rule.event == "Days Before" else -days)
+        meta = frappe.get_meta(rule.document_type)
+        df = meta.get_field(rule.date_changed)
+        if not df:
+            continue
+        filters = {rule.date_changed: ("between", (day, day)) if df.fieldtype == "Datetime" else day}
+        if meta.is_submittable:
+            filters["docstatus"] = ("<", 2)
+        for name in frappe.get_all(rule.document_type, filters=filters, pluck="name"):
+            try:
+                process_rule(rule, rule.document_type, name)
+            except Exception:
+                frappe.log_error(title="Notification Hub: date notification",
+                                 message=f"{rule.title} {name}\n{frappe.get_traceback()}")
+
+
+# ---------------- User alerts (system notifications -> WhatsApp / Telegram) ----------------
+def _alert_applies(row, log, roles):
+    if not row.enabled:
+        return False
+    if row.applies_to == "User" and row.user != log.for_user:
+        return False
+    if row.applies_to == "Role" and row.role not in roles:
+        return False
+    types = _lines(row.types)
+    if types and (log.type or "Alert") not in types:
+        return False
+    doctypes = _lines(row.document_types)
+    return not doctypes or log.document_type in doctypes
+
+
+def forward_system_notification(doc, method=None):
+    """Notification Log after_insert: queue the matching User Alerts."""
+    if doc.document_type == "Hub Message Log" or not doc.for_user:
+        return  # our own failure alerts must not loop back
+    s = frappe.get_cached_doc("Notification Hub")
+    if not s.user_alerts or not (s.enabled or s.whatsapp_enabled):
+        return
+    roles = set(frappe.get_roles(doc.for_user))
+    rows = [r for r in s.user_alerts if _alert_applies(r, doc, roles)]
+    if not rows:
+        return
+    channels = sorted({c for r in rows for c in rule_channels(r)})
+    template = next((r.template for r in rows if r.template), None)
+    frappe.enqueue("telegram_connector.sender.send_user_alert", queue="short", enqueue_after_commit=True,
+                   log_name=doc.name, channels=channels, template=template)
+
+
+def send_user_alert(log_name, channels, template=None):
+    from frappe.utils import strip_html
+
+    s = settings()
+    log = frappe.get_doc("Notification Log", log_name)
+    ref = None
+    if log.document_type and log.document_name and frappe.db.exists(log.document_type, log.document_name):
+        ref = frappe.get_doc(log.document_type, log.document_name)
+    subject = strip_html(log.subject or "").strip()
+    link = frappe.utils.get_url_to_form(log.document_type, log.document_name) if ref else ""
+    tpl = template and get_template(template, s)
+    if tpl:
+        ctx = template_context(ref, {"changed_by": log.from_user, "subject": subject, "link": link})
+        message = frappe.render_template(tpl, ctx)
+    else:
+        message = "\n".join(x for x in (subject, strip_html(log.email_content or "").strip(), link) if x)
+    active = [c for c in channels if channel_enabled(c, s)]
+    targets = [dict(_user_target(log.for_user), channel=c) for c in active]
+    send_to_targets(targets, message, log.document_type or "Notification Log", log.document_name or log.name,
+                    notification=f"User Alert: {log.type or 'Alert'}", notify=False)
 
 
 def deliver(log_name, notify=False):
@@ -508,14 +751,14 @@ def deliver(log_name, notify=False):
     status, error, chat_id = "Sent", "", log.chat_id
     try:
         if not s.enabled:
-            raise NotLinked("Notification Hub is not enabled")
+            raise NotLinked("Telegram is not enabled in Notification Hub.")
         pdf = None
         if log.attach_print:
             try:
                 pdf = frappe.get_print(log.reference_doctype, log.reference_name,
                                        print_format=log.print_format or None, as_pdf=True)
             except Exception as e:
-                error = f"Could not generate PDF: {e}"
+                error = f"The PDF could not be generated: {e}"
         link = find_link(log.party_type, log.party, log.mobile_no)
         pdf_name = f"{log.reference_name}.pdf"
         if not log.party_type and log.chat_id:
@@ -526,12 +769,14 @@ def deliver(log_name, notify=False):
         elif s.mode == "Bot":
             if not (link and link.status == "Linked" and link.chat_id):
                 link = link or ensure_link(log.party_type, log.party, log.mobile_no)
-                raise NotLinked(f"The customer has not linked their account yet. Link: {link.deep_link}")
+                raise NotLinked(f"The recipient has not linked their Telegram account yet. Please send them this link: {link.deep_link}")
             chat_id = link.chat_id
             send_text(chat_id, None, log.message, pdf, pdf_name)
         else:
+            if not log.party_type and log.chat_id and not log.mobile_no:
+                raise NotLinked("Sending to a Telegram group requires Mode = Bot in Notification Hub.")
             if not log.mobile_no:
-                raise NotLinked("No mobile number found")
+                raise NotLinked("No mobile number was found for this recipient.")
             info = send_text(None, log.mobile_no, log.message, pdf, pdf_name)
             chat_id = str(info["id"])
             link = link or ensure_link(log.party_type, log.party, log.mobile_no)
@@ -573,6 +818,10 @@ WA_DEFAULT_TEXT = '{"chat_id": "{phone}", "text": "{message}"}'
 WA_DEFAULT_MEDIA = '{"chat_id": "{phone}", "media_type": "document", "media_url": "{media_url}", "file_name": "{file_name}"}'
 
 
+_WA_GROUP_V2 = ("Issue: Wapilot Base URL\nResolution: Sending to WhatsApp groups requires Wapilot API v2. "
+                "Please set the Wapilot Base URL to https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message")
+
+
 def wa_base(s=None):
     s = s or settings()
     return (s.wapilot_base_url or "").strip().rstrip("/")
@@ -588,10 +837,14 @@ def wa_v2_urls(s=None):
     """Return (text_url, media_url). Raises a readable error if the instance id is missing."""
     s = s or settings()
     b = wa_base(s)
-    if not re.search(r"/api/v2/[^/]+", b):
+    m = re.search(r"/api/v2/([^/]+)", b)
+    # "instances" is the API's list path and "<INSTANCE_ID>" the docs placeholder: neither is a real instance id
+    if not m or m.group(1).lower() in ("instances", "instance", "send-message") or "<" in m.group(1) or "%3c" in m.group(1).lower():
         raise frappe.ValidationError(
-            "Wapilot Base URL for API v2 must contain your instance ID, e.g. "
-            "https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            "Issue: Wapilot Base URL (instance ID)\n"
+            "Resolution: The URL does not contain a valid instance ID. Please copy the instance ID from the Wapilot "
+            "dashboard and use: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+            f"\nTechnical details: current Base URL is {b or '(empty)'}"
         )
     if b.endswith("/send-message"):
         text_url, root = b, b[: -len("/send-message")]
@@ -601,9 +854,15 @@ def wa_v2_urls(s=None):
     return text_url, media_url
 
 
+def is_wa_group(chat_id):
+    return str(chat_id or "").strip().endswith("@g.us")
+
+
 def _wa_fmt_phone(phone, s=None):
     s = s or settings()
     p = str(phone or "").strip()
+    if is_wa_group(p):
+        return p  # group ids are sent exactly as they are
     if (s.wapilot_phone_format or "").startswith("With plus"):
         return p if p.startswith("+") else "+" + p.lstrip("+")
     return p.lstrip("+")
@@ -617,7 +876,7 @@ def _wa_render(template, default, **values):
     try:
         data = json.loads((template or "").strip() or default)
     except ValueError as e:
-        raise frappe.ValidationError(f"The payload in Advanced (API v2 payloads) is not valid JSON: {e}")
+        raise frappe.ValidationError(f"The payload under Advanced (API v2 payloads) is not valid JSON: {e}")
 
     def walk(x):
         if isinstance(x, str):
@@ -637,7 +896,7 @@ def _wa_v2_post(url, payload):
     s = settings()
     token = s.get_password("wapilot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Wapilot API token is not set")
+        raise frappe.ValidationError("The Wapilot API token is not set. Please enter it in the WhatsApp tab of Notification Hub.")
     try:
         r = requests.post(
             url, json=payload, timeout=30,
@@ -663,7 +922,7 @@ def _wa_client():
     s = settings()
     token = s.get_password("wapilot_token", raise_exception=False)
     if not token:
-        raise frappe.ValidationError("Wapilot API token is not set")
+        raise frappe.ValidationError("The Wapilot API token is not set. Please enter it in the WhatsApp tab of Notification Hub.")
     try:
         from wapilot import WapilotSDK
     except ImportError:
@@ -696,6 +955,8 @@ def wa_send(phone, text):
         url, _ = wa_v2_urls(s)
         payload = _wa_render(s.wapilot_payload, WA_DEFAULT_TEXT, phone=_wa_fmt_phone(phone, s), message=text)
         return _wa_v2_post(url, payload)
+    if is_wa_group(phone):
+        raise frappe.ValidationError(_WA_GROUP_V2)
     c = _wa_client()
     return _wa_call(c.send_message, {"phone": phone, "message": text})
 
@@ -707,6 +968,8 @@ def wa_send_pdf(phone, url, file_name):
         payload = _wa_render(s.wapilot_media_payload, WA_DEFAULT_MEDIA,
                              phone=_wa_fmt_phone(phone, s), media_url=url, file_name=file_name)
         return _wa_v2_post(media, payload)
+    if is_wa_group(phone):
+        raise frappe.ValidationError(_WA_GROUP_V2)
     c = _wa_client()
     return _wa_call(c.send_media_message, {
         "phone": phone, "media_type": "document", "media_url": url, "file_name": file_name,
@@ -716,8 +979,8 @@ def wa_send_pdf(phone, url, file_name):
 def _brief(exc):
     """Short, readable reason from an explain() text: no technical details."""
     t = str(exc)
-    where = re.search(r"Problem in: (.+)", t)
-    fix = re.search(r"Cause and fix: (.+)", t)
+    where = re.search(r"Issue: (.+)", t)
+    fix = re.search(r"Resolution: (.+)", t)
     if where and fix:
         return f"{where.group(1).strip()}. {fix.group(1).strip()}"
     return t.splitlines()[0][:200]
@@ -755,28 +1018,29 @@ def _deliver_whatsapp(log, notify=False):
     status, error, quiet = "Sent", "", False
     try:
         if not s.whatsapp_enabled:
-            raise NotLinked("WhatsApp is not enabled in Notification Hub")
-        if not log.mobile_no:
-            raise NotLinked("No mobile number found")
-        wa_send(log.mobile_no, log.message)
+            raise NotLinked("WhatsApp is not enabled in Notification Hub.")
+        to = log.mobile_no or log.chat_id  # chat_id = WhatsApp group (…@g.us)
+        if not to:
+            raise NotLinked("No mobile number was found for this recipient.")
+        wa_send(to, log.message)
         if log.attach_print:
             if not _site_is_public():
                 # expected on an internal server: record it, but do not raise an alert for every message
-                error = ("Message delivered. PDF not attached: the site address is not reachable from the internet, "
-                         "which WhatsApp needs to download the file.")
+                error = ("The message was delivered, but the PDF was not attached because the site address is not reachable from the internet, "
+                         "which is required for WhatsApp to download the file.")
                 quiet = True
             else:
                 try:
                     pdf = frappe.get_print(log.reference_doctype, log.reference_name,
                                            print_format=log.print_format or None, as_pdf=True)
-                    wa_send_pdf(log.mobile_no, _public_pdf_url(log, pdf), f"{log.reference_name}.pdf")
+                    wa_send_pdf(to, _public_pdf_url(log, pdf), f"{log.reference_name}.pdf")
                 except Exception as e:
-                    error = f"Message delivered. PDF not attached: {_brief(e)}"
+                    error = f"The message was delivered, but the PDF could not be attached: {_brief(e)}"
     except NotLinked as e:
         status, error = "Not Linked", str(e)
     except Exception as e:
         status, error = "Failed", explain("WhatsApp", e)
-    log.db_set({"status": status, "error": error, "chat_id": log.mobile_no or "", "mode": "Wapilot",
+    log.db_set({"status": status, "error": error, "chat_id": log.chat_id or log.mobile_no or "", "mode": "Wapilot",
                 "sent_on": now_datetime() if status == "Sent" else None})
     frappe.db.commit()
     if notify and not quiet:

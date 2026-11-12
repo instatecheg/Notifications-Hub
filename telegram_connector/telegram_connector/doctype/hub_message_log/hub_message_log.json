@@ -8,9 +8,8 @@
  "fields": [
   {
    "fieldname": "notification",
-   "fieldtype": "Link",
+   "fieldtype": "Data",
    "label": "Notification",
-   "options": "Hub Notification Rule",
    "read_only": 1
   },
   {

@@ -1,0 +1,83 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Group",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "group_name",
+   "fieldtype": "Data",
+   "label": "Group Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "WhatsApp\nTelegram",
+   "default": "WhatsApp",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "chat_id",
+   "fieldtype": "Data",
+   "label": "Group Chat ID",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "WhatsApp: id ending with @g.us (WhatsApp Diagnostics lists them). Telegram: negative number, e.g. -1001234567890; the bot must be in the group."
+  },
+  {
+   "fieldname": "sec_notify",
+   "fieldtype": "Section Break",
+   "label": "Notify this group",
+   "description": "Optional. Select a document, an event and a template to send that template to this group. A linked notification is created in the Notifications tab, where you can add conditions."
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "options": "DocType",
+   "label": "Document",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Select",
+   "options": "\nNew\nSave\nSubmit\nCancel",
+   "label": "Event",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Select",
+   "label": "Template",
+   "in_list_view": 1,
+   "columns": 2,
+   "description": "Templates from the Templates tab"
+  },
+  {
+   "fieldname": "used_in",
+   "fieldtype": "Small Text",
+   "label": "Used In",
+   "read_only": 1,
+   "description": "Notifications that use this"
+  }
+ ],
+ "permissions": []
+}

@@ -7,64 +7,23 @@
  "sort_order": "DESC",
  "fields": [
   {
-   "fieldname": "sec_guides",
-   "fieldtype": "Section Break",
-   "label": "Setup Guides (click for step-by-step instructions)"
+   "fieldname": "tab_general",
+   "fieldtype": "Tab Break",
+   "label": "General"
   },
   {
-   "fieldname": "btn_guide_whatsapp",
-   "fieldtype": "Button",
-   "label": "WhatsApp Guide"
+   "fieldname": "sec_doc_general",
+   "fieldtype": "Section Break"
   },
   {
-   "fieldname": "col_g1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "btn_guide_tg_bot",
-   "fieldtype": "Button",
-   "label": "Telegram Bot Guide"
-  },
-  {
-   "fieldname": "col_g2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "btn_guide_tg_user",
-   "fieldtype": "Button",
-   "label": "Telegram User Account Guide"
-  },
-  {
-   "fieldname": "col_g3",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "btn_guide_trouble",
-   "fieldtype": "Button",
-   "label": "Troubleshooting"
+   "fieldname": "doc_general",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Notification Hub overview</summary>\n<p>Notification Hub is the central place for sending ERPNext messages through <b>Telegram</b> and <b>WhatsApp</b>.\nEvery setting, notification, template and group is managed from this page.</p>\n<h6>Tabs</h6>\n<table><tr><th>Tab</th><th>Purpose</th></tr><tr><td>Notifications</td><td>Automatic messages sent when something happens to a document (created, submitted, status changed, due date approaching, etc.).</td></tr><tr><td>User Alerts</td><td>Forwards the system notifications that users receive in the bell to their WhatsApp or Telegram.</td></tr><tr><td>Templates</td><td>A library of reusable messages that notifications and user alerts can use.</td></tr><tr><td>Groups</td><td>WhatsApp and Telegram groups that can receive notifications.</td></tr><tr><td>Telegram / WhatsApp</td><td>Connection settings for each channel.</td></tr><tr><td>Test</td><td>Sends a single test message to verify a channel or a group.</td></tr></table>\n<h6>Recommended setup order</h6>\n<ol>\n<li>Set the <b>Default Country Code</b> below. Local numbers such as <code>01001234567</code> are converted to international format with it (Egypt = <code>20</code>).</li>\n<li>Configure and enable a channel in the <b>Telegram</b> or <b>WhatsApp</b> tab.</li>\n<li>Send a message from the <b>Test</b> tab to confirm the channel works.</li>\n<li>Add your <b>Groups</b> and <b>Templates</b>, if required.</li>\n<li>Create <b>Notifications</b> and <b>User Alerts</b>.</li>\n<li>Monitor the delivery of every message in <b>Hub Message Log</b>. A failed message can be resent with <b>Retry</b>.</li>\n</ol>\n<div class=\"note\">Delivery Trip and Transportation Request messages to drivers are handled separately and are not configured here,\nexcept for the driver group chat id in the Telegram tab.</div>\n</details>"
   },
   {
    "fieldname": "sec_main",
    "fieldtype": "Section Break",
    "label": "General"
-  },
-  {
-   "fieldname": "enabled",
-   "fieldtype": "Check",
-   "label": "Enable Telegram"
-  },
-  {
-   "fieldname": "whatsapp_enabled",
-   "fieldtype": "Check",
-   "label": "Enable WhatsApp"
-  },
-  {
-   "fieldname": "mode",
-   "fieldtype": "Select",
-   "label": "Mode",
-   "options": "Bot\nUser Account",
-   "default": "Bot",
-   "reqd": 1
   },
   {
    "fieldname": "default_country_code",
@@ -73,17 +32,157 @@
    "default": "20"
   },
   {
-   "fieldname": "group_chat_id",
-   "fieldtype": "Data",
-   "label": "Group Chat ID",
-   "description": "Telegram group chat id (negative number, e.g. -100...). Transportation Request \"Documents requested\" messages are posted here, by the bot (Bot mode) or by the logged-in account (User Account mode, which must be a member of the group).",
-   "default": "-5524050749"
+   "fieldname": "sec_guides",
+   "fieldtype": "Section Break",
+   "label": "Troubleshooting"
+  },
+  {
+   "fieldname": "btn_guide_trouble",
+   "fieldtype": "Button",
+   "label": "Open Troubleshooting Guide"
+  },
+  {
+   "fieldname": "tab_notifications",
+   "fieldtype": "Tab Break",
+   "label": "Notifications"
+  },
+  {
+   "fieldname": "sec_doc_notifications",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_notifications",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Notifications</summary>\n<p>Each row is one automatic notification. Click <b>Add Row</b> to create a notification, or <b>Edit</b> to change one.\nAll settings are made in the dialog; no code is required.</p>\n<h6>Settings</h6>\n<table><tr><th>Setting</th><th>Description</th></tr><tr><td>Document</td><td>The document type the notification applies to, e.g. Sales Invoice or Delivery Trip.</td></tr><tr><td>Event</td><td>When the notification is sent (see the table below).</td></tr><tr><td>Channel</td><td>WhatsApp, Telegram or Both, for the people selected under Send To. Groups always use their own channel.</td></tr><tr><td>Conditions</td><td>Optional filters, e.g. <i>Status = Completed</i> or <i>Grand Total &gt; 1000</i>. The notification is sent only when all conditions are met.</td></tr><tr><td>Send To</td><td>The document's customer or contact, specific users, every user with a role, fixed mobile numbers, a person stored on the document (e.g. Created By), and groups.</td></tr><tr><td>Message</td><td>Select a saved template or write the message. Use <b>Insert Field</b> to add document values and <b>Preview</b> to view the result with a real document.</td></tr><tr><td>Attach PDF</td><td>Attaches the document as a PDF using the selected Print Format.</td></tr></table>\n<h6>Events</h6>\n<table><tr><th>Event</th><th>Sent when</th></tr><tr><td>New</td><td>The document is created.</td></tr><tr><td>Save</td><td>The document is saved.</td></tr><tr><td>Submit / Cancel</td><td>The document is submitted or cancelled.</td></tr><tr><td>Value Change</td><td>The selected field changes, e.g. Status changes from <i>In Transit</i> to <i>Delivered</i>.</td></tr><tr><td>Days Before / Days After</td><td>A number of days before or after a date field, e.g. 2 days before the Due Date. Checked once a day.</td></tr></table>\n<h6>Message placeholders</h6>\n<table><tr><th>Placeholder</th><th>Value</th></tr><tr><td><code>{{ doc.fieldname }}</code></td><td>Any field of the document, e.g. <code>{{ doc.customer_name }}</code></td></tr><tr><td><code>{{ doc.get_formatted(\"grand_total\") }}</code></td><td>A field formatted with currency, date format, etc.</td></tr><tr><td><code>{{ link }}</code></td><td>A link that opens the document</td></tr><tr><td><code>{{ changed_by }}</code></td><td>Full name of the user who made the change</td></tr><tr><td><code>{{ field_label }}</code>, <code>{{ old_value }}</code>, <code>{{ new_value }}</code></td><td>Value Change only: the field name, its previous value and its new value</td></tr><tr><td><code>{{ subject }}</code></td><td>User Alerts only: the notification text as it appears in the bell</td></tr></table>\n<div class=\"note\">The <b>Notify Customer</b> button on a Sales Invoice uses the enabled Sales Invoice notification and sends it to the customer only.</div>\n</details>"
+  },
+  {
+   "fieldname": "sec_notifications",
+   "fieldtype": "Section Break",
+   "description": "Each row is one notification. Click Edit to set the event, conditions, recipients and message, no code needed."
+  },
+  {
+   "fieldname": "notifications",
+   "fieldtype": "Table",
+   "label": "Notifications",
+   "options": "Hub Notification"
+  },
+  {
+   "fieldname": "tab_users",
+   "fieldtype": "Tab Break",
+   "label": "User Alerts"
+  },
+  {
+   "fieldname": "sec_doc_users",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_users",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: User Alerts</summary>\n<p>User Alerts forward the notifications that users receive in the system bell (for example\n<i>Delivery Trip MAT-DT-0050 status changed from Ended to Reviewed</i>) to WhatsApp or Telegram.\nClick <b>Add Row</b> to create an alert, or <b>Edit</b> to change one.</p>\n<h6>Settings</h6>\n<table><tr><th>Setting</th><th>Description</th></tr><tr><td>For</td><td>A single user, or every user who has a role.</td></tr><tr><td>Send on</td><td>WhatsApp, Telegram or Both.</td></tr><tr><td>Types</td><td>Which notifications are forwarded. Leave empty to forward all types.</td></tr><tr><td>Documents</td><td>Which document types are forwarded, e.g. Delivery Trip. Leave empty to forward all documents.</td></tr><tr><td>Template</td><td>Optional. Without a template, the message contains the notification text and a link to the document.</td></tr></table>\n<h6>Notification types</h6>\n<table><tr><th>Type</th><th>Description</th></tr><tr><td>Alert</td><td>Status changes and notifications created by the system or by notification rules.</td></tr><tr><td>Assignment</td><td>A document has been assigned to the user.</td></tr><tr><td>Mention</td><td>The user has been mentioned in a comment.</td></tr><tr><td>Share</td><td>A document has been shared with the user.</td></tr><tr><td>Energy Point</td><td>Energy points have been awarded or reviewed.</td></tr></table>\n<h6>Requirements</h6>\n<ul>\n<li><b>WhatsApp:</b> the user must have a <b>Mobile No</b> in their User record.</li>\n<li><b>Telegram (Bot mode):</b> the user must link their Telegram account once. Open the alert, click\n<b>Get Telegram Link for this user</b> and send the link to the user.</li>\n</ul>\n</details>"
+  },
+  {
+   "fieldname": "sec_users",
+   "fieldtype": "Section Break",
+   "description": "Forward the system notifications (the bell: status changes, assignments, mentions, shares) to users on WhatsApp / Telegram. Click Edit to choose which notifications and documents."
+  },
+  {
+   "fieldname": "user_alerts",
+   "fieldtype": "Table",
+   "label": "User Alerts",
+   "options": "Hub User Alert"
+  },
+  {
+   "fieldname": "tab_templates",
+   "fieldtype": "Tab Break",
+   "label": "Templates"
+  },
+  {
+   "fieldname": "sec_doc_templates",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_templates",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Templates</summary>\n<p>Templates are reusable messages. A notification or a user alert can select a template instead of its own message.\nWhen a template is edited, every notification and alert that uses it is updated automatically.</p>\n<h6>Creating a template</h6>\n<ol>\n<li>Click <b>Add Row</b>, enter a name, and optionally select the document it is intended for.</li>\n<li>Write the message. Use <b>Insert Field</b> to add document values and <b>Preview</b> to check the result.</li>\n<li>Alternatively, write a message inside a notification and click <b>Save as Template</b>.</li>\n</ol>\n<h6>Placeholders</h6>\n<table><tr><th>Placeholder</th><th>Value</th></tr><tr><td><code>{{ doc.fieldname }}</code></td><td>Any field of the document, e.g. <code>{{ doc.customer_name }}</code></td></tr><tr><td><code>{{ doc.get_formatted(\"grand_total\") }}</code></td><td>A field formatted with currency, date format, etc.</td></tr><tr><td><code>{{ link }}</code></td><td>A link that opens the document</td></tr><tr><td><code>{{ changed_by }}</code></td><td>Full name of the user who made the change</td></tr><tr><td><code>{{ field_label }}</code>, <code>{{ old_value }}</code>, <code>{{ new_value }}</code></td><td>Value Change only: the field name, its previous value and its new value</td></tr><tr><td><code>{{ subject }}</code></td><td>User Alerts only: the notification text as it appears in the bell</td></tr></table>\n<h6>Example</h6>\n<pre style=\"white-space:pre-wrap\">Dear {{ doc.customer_name }},\nYour order {{ doc.name }} is now {{ doc.status }}.\n{% if doc.delivery_date %}Expected delivery: {{ doc.get_formatted(\"delivery_date\") }}{% endif %}\n{{ link }}</pre>\n<h6>Using a template</h6>\n<p>Click <b>Add Notification</b> on a template row to create a notification that uses that template. Select the event and the recipients, then click Save. A template can also be selected from the Message section of any notification. The <b>Used In</b> column lists the notifications and user alerts that use the template.</p>\n</details>"
+  },
+  {
+   "fieldname": "sec_templates",
+   "fieldtype": "Section Break",
+   "description": "Reusable messages. Pick one in a notification or user alert; editing it here updates everyone who uses it."
+  },
+  {
+   "fieldname": "templates",
+   "fieldtype": "Table",
+   "label": "Templates",
+   "options": "Hub Message Template"
+  },
+  {
+   "fieldname": "tab_groups",
+   "fieldtype": "Tab Break",
+   "label": "Groups"
+  },
+  {
+   "fieldname": "sec_doc_groups",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_groups",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Groups</summary>\n<p>Groups defined here can be selected under <b>Send To &gt; Groups</b> in any notification.\nEach group receives messages on its own channel.</p>\n<h6>WhatsApp groups</h6>\n<ol>\n<li>Wapilot <b>API v2</b> is required, and the connected WhatsApp number must be a member of the group.</li>\n<li>Run <b>WhatsApp Diagnostics</b> in the WhatsApp tab to list your groups, or obtain the group id from the Wapilot dashboard.</li>\n<li>The group id ends with <code>@g.us</code>, e.g. <code>120363012345678901@g.us</code>.</li>\n</ol>\n<h6>Telegram groups</h6>\n<ol>\n<li>Telegram must be in <b>Bot</b> mode, and the bot must be added to the group as a member.</li>\n<li>The chat id is a negative number, e.g. <code>-1001234567890</code>. In Telegram Web, it appears in the address bar when the group is open.</li>\n</ol>\n<div class=\"note\">Before using a group in a notification, please verify it from the <b>Test</b> tab by entering its id as the Test Recipient.</div>\n<h6>Sending a template to a group</h6>\n<ol>\n<li>Create the message in the <b>Templates</b> tab.</li>\n<li>In the group row, select the <b>Template</b>. The <b>Document</b> is filled from the template; select the <b>Event</b> (New, Save, Submit or Cancel).</li>\n<li>Save. A linked notification named after the group is created in the <b>Notifications</b> tab.</li>\n</ol>\n<p>Open that notification to add conditions or more recipients. Its document, event, template and channel always follow the group row. Clearing the template in the group row removes the linked notification.</p>\n<p>For other events, such as Value Change or Days Before, create a notification in the Notifications tab and select the group under Send To. The <b>Used In</b> field lists every notification that sends to the group.</p>\n</details>"
+  },
+  {
+   "fieldname": "sec_groups",
+   "fieldtype": "Section Break",
+   "description": "WhatsApp and Telegram groups that notifications can be sent to."
+  },
+  {
+   "fieldname": "groups",
+   "fieldtype": "Table",
+   "label": "Groups",
+   "options": "Hub Group"
+  },
+  {
+   "fieldname": "tab_telegram",
+   "fieldtype": "Tab Break",
+   "label": "Telegram"
+  },
+  {
+   "fieldname": "sec_doc_telegram",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_telegram",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Telegram</summary>\n<p>Telegram can send messages in one of two modes:</p>\n<table><tr><th>Mode</th><th>Description</th><th>Requirement</th></tr><tr><td>Bot (recommended)</td><td>The official and safest method. Messages are sent by your bot.</td><td>Each recipient must open their personal link and press Start once. Groups are supported.</td></tr><tr><td>User Account</td><td>Messages are sent from a regular Telegram account using the recipient's phone number.</td><td>The number must be registered on Telegram. Please use a dedicated number, as high volumes may cause the account to be restricted.</td></tr></table>\n<h6>Bot setup</h6>\n<ol>\n<li>In Telegram, open <b>@BotFather</b>, send <code>/newbot</code> and copy the token.</li>\n<li>Enable Telegram, select <b>Mode = Bot</b>, paste the <b>Bot Token</b> and save.</li>\n<li>Click <b>Test Connection</b>. The Bot Username is filled automatically.</li>\n<li>Select the <b>Link Method</b>: <b>Polling</b> for internal servers, or <b>Webhook</b> if the site has a public HTTPS address (then click Set Webhook).</li>\n</ol>\n<h6>User Account setup</h6>\n<ol>\n<li>Obtain the <b>api_id</b> and <b>api_hash</b> from <code>https://my.telegram.org</code> (API development tools).</li>\n<li>Enter them with the <b>Login Phone</b> and save.</li>\n<li>Click <b>Send Code</b>, enter the code received in the Telegram app, then click <b>Verify &amp; Login</b>.</li>\n</ol>\n<p>The <b>Driver Notifications Group Chat ID</b> is the Telegram group that receives Delivery Trip and Transportation Request details.</p>\n</details>"
+  },
+  {
+   "fieldname": "sec_tg",
+   "fieldtype": "Section Break",
+   "label": "Telegram"
+  },
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable Telegram"
+  },
+  {
+   "fieldname": "col_tg",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "mode",
+   "fieldtype": "Select",
+   "label": "Mode",
+   "options": "Bot\nUser Account",
+   "default": "Bot",
+   "reqd": 1,
+   "depends_on": "enabled"
   },
   {
    "fieldname": "sec_bot",
    "fieldtype": "Section Break",
    "label": "Bot",
-   "depends_on": "eval:doc.mode=='Bot'"
+   "depends_on": "eval:doc.enabled && doc.mode=='Bot'"
   },
   {
    "fieldname": "bot_token",
@@ -102,6 +201,17 @@
    "label": "Link Method",
    "options": "Polling\nWebhook",
    "default": "Polling"
+  },
+  {
+   "fieldname": "col_bot",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "group_chat_id",
+   "fieldtype": "Data",
+   "label": "Group Chat ID",
+   "description": "Telegram group chat id (negative number, e.g. -100...). Transportation Request \"Documents requested\" messages are posted here, by the bot (Bot mode) or by the logged-in account (User Account mode, which must be a member of the group). For other groups use the Groups tab.",
+   "default": "-5524050749"
   },
   {
    "fieldname": "btn_test_connection",
@@ -130,7 +240,7 @@
    "fieldname": "sec_acc",
    "fieldtype": "Section Break",
    "label": "User Account",
-   "depends_on": "eval:doc.mode=='User Account'"
+   "depends_on": "eval:doc.enabled && doc.mode=='User Account'"
   },
   {
    "fieldname": "api_id",
@@ -151,6 +261,10 @@
    "fieldname": "btn_send_code",
    "fieldtype": "Button",
    "label": "Send Code"
+  },
+  {
+   "fieldname": "col_acc",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "login_code",
@@ -180,9 +294,33 @@
    "read_only": 1
   },
   {
+   "fieldname": "tab_whatsapp",
+   "fieldtype": "Tab Break",
+   "label": "WhatsApp"
+  },
+  {
+   "fieldname": "sec_doc_whatsapp",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_whatsapp",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: WhatsApp</summary>\n<p>WhatsApp messages are sent through the <b>Wapilot</b> gateway. Recipients do not need to link anything; their mobile number is sufficient.</p>\n<h6>Setup</h6>\n<ol>\n<li>In the Wapilot dashboard, connect your WhatsApp number and confirm that it is <b>active</b>.</li>\n<li>Copy the <b>API token</b> and the <b>Instance ID</b>.</li>\n<li>Enable WhatsApp and enter the token and the Base URL:\n<table><tr><th>API</th><th>Base URL</th></tr><tr><td>API v2 (recommended)</td><td><code>https://api.wapilot.net/api/v2/INSTANCE_ID/send-message</code></td></tr><tr><td>Classic SDK</td><td><code>https://app.wapilot.io</code> (requires the wapilot-sdk package on the server)</td></tr></table></li>\n<li>Keep <b>Phone Format</b> on <i>Digits only</i> unless Wapilot requires the plus sign.</li>\n<li>Save, then click <b>WhatsApp Diagnostics</b>. The check does not send any message; it reports each step as Passed, Warning or Failed.</li>\n</ol>\n<div class=\"note\"><b>PDF attachments:</b> Wapilot downloads the PDF from the site, so the site must be reachable from the internet.\n<b>Advanced (API v2 payloads)</b> should only be changed if the diagnostics or a test message indicate a different field name.</div>\n</details>"
+  },
+  {
+   "fieldname": "sec_wa_main",
+   "fieldtype": "Section Break",
+   "label": "WhatsApp"
+  },
+  {
+   "fieldname": "whatsapp_enabled",
+   "fieldtype": "Check",
+   "label": "Enable WhatsApp"
+  },
+  {
    "fieldname": "sec_wa",
    "fieldtype": "Section Break",
-   "label": "WhatsApp (Wapilot)",
+   "label": "Wapilot",
    "depends_on": "eval:doc.whatsapp_enabled"
   },
   {
@@ -194,7 +332,12 @@
    "fieldname": "wapilot_base_url",
    "fieldtype": "Data",
    "label": "Wapilot Base URL",
-   "default": "https://app.wapilot.io"
+   "default": "https://app.wapilot.io",
+   "description": "API v2: https://api.wapilot.net/api/v2/<INSTANCE_ID>/send-message"
+  },
+  {
+   "fieldname": "col_wa",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "wapilot_phone_format",
@@ -231,9 +374,23 @@
    "label": "Media Payload (JSON)"
   },
   {
+   "fieldname": "tab_test",
+   "fieldtype": "Tab Break",
+   "label": "Test"
+  },
+  {
+   "fieldname": "sec_doc_test",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "doc_test",
+   "fieldtype": "HTML",
+   "options": "<style>.hub-doc{border:1px solid var(--border-color);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;line-height:1.6;background:var(--subtle-fg)}.hub-doc summary{cursor:pointer;font-weight:600;color:var(--heading-color)}.hub-doc h6{margin:14px 0 6px;font-weight:600;font-size:13px}.hub-doc ol,.hub-doc ul{padding-left:20px;margin:4px 0 8px}.hub-doc table{width:100%;border-collapse:collapse;margin:6px 0 10px}.hub-doc th,.hub-doc td{border:1px solid var(--border-color);padding:5px 8px;vertical-align:top;text-align:left}.hub-doc th{background:var(--control-bg)}.hub-doc code{background:var(--control-bg);padding:1px 5px;border-radius:4px}.hub-doc .note{border-left:3px solid var(--orange-500);padding:4px 10px;margin:8px 0}</style><details class=\"hub-doc\"><summary>Guide: Test</summary>\n<p>Sends one message immediately to verify that a channel or a group is configured correctly.</p>\n<table><tr><th>Channel</th><th>Accepted Test Recipient</th></tr><tr><td>WhatsApp</td><td>A mobile number (e.g. <code>01001234567</code>) or a group id ending with <code>@g.us</code>.</td></tr><tr><td>Telegram (Bot)</td><td>A chat id: a user's chat id from Telegram Link, or a group chat id such as <code>-1001234567890</code>.</td></tr><tr><td>Telegram (User Account)</td><td>A mobile number registered on Telegram.</td></tr></table>\n<p>If the message fails, the error identifies the <b>Issue</b> and the <b>Resolution</b>, followed by the technical details.</p>\n</details>"
+  },
+  {
    "fieldname": "sec_test",
    "fieldtype": "Section Break",
-   "label": "Test"
+   "label": "Send a Test Message"
   },
   {
    "fieldname": "test_channel",
@@ -245,7 +402,12 @@
   {
    "fieldname": "test_recipient",
    "fieldtype": "Data",
-   "label": "Test Recipient"
+   "label": "Test Recipient",
+   "description": "Mobile number, a Telegram chat id, or a WhatsApp group id ending with @g.us"
+  },
+  {
+   "fieldname": "col_test",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "test_text",

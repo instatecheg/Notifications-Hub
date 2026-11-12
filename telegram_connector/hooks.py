@@ -14,7 +14,11 @@ doctype_js = {
     # "Sales Invoice": "public/js/sales_invoice.js",
 }
 
+_h = "telegram_connector.events.handle"
+
 # Automatic messages:
+# - Notification Hub rules (Notifications / User Alerts tabs): only the rules enabled in the Hub are
+#   sent (telegram_connector/events.py, sender.forward_system_notification, sender.run_date_rules);
 # - a Transportation Request reaching "Documents requested" -> every user with the "Document" or
 #   "Trip Documents" role
 #   (telegram_connector/transportation_request.py);
@@ -22,12 +26,12 @@ doctype_js = {
 #   supervisor who created the trip's request (telegram_connector/delivery_trip.py).
 #
 # Switched off (code kept; uncomment to send them again):
-# - Hub Notification Rules on every doctype:  "*": {"after_insert": _h, "on_update": _h, "on_submit": _h, "on_cancel": _h}
-#   with _h = "telegram_connector.events.handle"
 # - Details / changes to the assigned driver, the document's creator and the Telegram group
 #   (Notification Hub > Group Chat ID): "Delivery Trip" and "Transportation Request"
 #   {"on_update": _dt, "on_update_after_submit": _dt} with _dt = "telegram_connector.driver_notifications.on_update"
 doc_events = {
+    "*": {"after_insert": _h, "on_update": _h, "on_update_after_submit": _h, "on_submit": _h, "on_cancel": _h},
+    "Notification Log": {"after_insert": "telegram_connector.sender.forward_system_notification"},
     "Transportation Request": {
         "on_update_after_submit": "telegram_connector.transportation_request.on_update_after_submit",
     },
@@ -43,5 +47,5 @@ fixtures = [
 
 scheduler_events = {
     "cron": {"* * * * *": ["telegram_connector.sender.poll_updates"]},
-    "daily": ["telegram_connector.sender.cleanup_public_pdfs"],
+    "daily": ["telegram_connector.sender.cleanup_public_pdfs", "telegram_connector.sender.run_date_rules"],
 }

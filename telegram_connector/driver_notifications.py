@@ -122,7 +122,8 @@ def _enqueue(doctype, name, party_type, party, text, channels, kind):
 
 def _group_id():
     s = sender.settings()
-    if not s.enabled:
+    # deliver() sends to a group chat id only in Bot mode; User Account mode would log a false failure
+    if not s.enabled or s.mode != "Bot":
         return ""
     return (s.get("group_chat_id") or "").strip()
 

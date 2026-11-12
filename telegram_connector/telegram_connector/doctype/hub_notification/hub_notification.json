@@ -1,0 +1,204 @@
+{
+ "doctype": "DocType",
+ "name": "Hub Notification",
+ "module": "Telegram Connector",
+ "engine": "InnoDB",
+ "istable": 1,
+ "editable_grid": 1,
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled",
+   "default": "1",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "title",
+   "fieldtype": "Data",
+   "label": "Title"
+  },
+  {
+   "fieldname": "document_type",
+   "fieldtype": "Link",
+   "label": "Document",
+   "options": "DocType",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "event",
+   "fieldtype": "Select",
+   "label": "Event",
+   "default": "Submit",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1,
+   "options": "New\nSave\nSubmit\nCancel\nValue Change\nDays Before\nDays After"
+  },
+  {
+   "fieldname": "channel",
+   "fieldtype": "Select",
+   "label": "Channel",
+   "options": "Telegram\nWhatsApp\nBoth",
+   "default": "WhatsApp",
+   "reqd": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "template",
+   "fieldtype": "Data",
+   "label": "Template",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "send_to",
+   "fieldtype": "Data",
+   "label": "Send To",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "btn_edit",
+   "fieldtype": "Button",
+   "label": "Edit",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "value_changed",
+   "fieldtype": "Data",
+   "label": "Value Changed",
+   "hidden": 1
+  },
+  {
+   "fieldname": "date_changed",
+   "fieldtype": "Data",
+   "label": "Reference Date",
+   "hidden": 1
+  },
+  {
+   "fieldname": "days_in_advance",
+   "fieldtype": "Int",
+   "label": "Days",
+   "default": "1",
+   "hidden": 1
+  },
+  {
+   "fieldname": "filters",
+   "fieldtype": "Code",
+   "label": "Conditions",
+   "options": "JSON",
+   "hidden": 1
+  },
+  {
+   "fieldname": "condition",
+   "fieldtype": "Code",
+   "label": "Python Condition",
+   "options": "PythonExpression",
+   "hidden": 1
+  },
+  {
+   "fieldname": "send_to_contact",
+   "fieldtype": "Check",
+   "label": "Send to the document's customer / contact",
+   "default": "1",
+   "hidden": 1
+  },
+  {
+   "fieldname": "mobile_field",
+   "fieldtype": "Data",
+   "label": "Mobile Field",
+   "hidden": 1
+  },
+  {
+   "fieldname": "party_field",
+   "fieldtype": "Data",
+   "label": "Party Field",
+   "hidden": 1
+  },
+  {
+   "fieldname": "party_doctype",
+   "fieldtype": "Link",
+   "label": "Party Doctype",
+   "options": "DocType",
+   "hidden": 1
+  },
+  {
+   "fieldname": "party_mobile_field",
+   "fieldtype": "Data",
+   "label": "Party Mobile Field",
+   "hidden": 1
+  },
+  {
+   "fieldname": "prefer_party_mobile",
+   "fieldtype": "Check",
+   "label": "Prefer Party Mobile",
+   "hidden": 1
+  },
+  {
+   "fieldname": "users",
+   "fieldtype": "Small Text",
+   "label": "Users",
+   "hidden": 1
+  },
+  {
+   "fieldname": "roles",
+   "fieldtype": "Small Text",
+   "label": "Roles",
+   "hidden": 1
+  },
+  {
+   "fieldname": "mobile_numbers",
+   "fieldtype": "Small Text",
+   "label": "Mobile Numbers",
+   "hidden": 1
+  },
+  {
+   "fieldname": "document_fields",
+   "fieldtype": "Small Text",
+   "label": "Document Fields",
+   "hidden": 1
+  },
+  {
+   "fieldname": "chat_groups",
+   "fieldtype": "Small Text",
+   "label": "Groups",
+   "hidden": 1
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Code",
+   "label": "Message",
+   "options": "Jinja",
+   "hidden": 1
+  },
+  {
+   "fieldname": "attach_print",
+   "fieldtype": "Check",
+   "label": "Attach PDF",
+   "hidden": 1
+  },
+  {
+   "fieldname": "print_format",
+   "fieldtype": "Link",
+   "label": "Print Format",
+   "options": "Print Format",
+   "hidden": 1
+  },
+  {
+   "fieldname": "source_group",
+   "fieldtype": "Data",
+   "label": "Created From Group",
+   "hidden": 1,
+   "read_only": 1
+  }
+ ],
+ "permissions": []
+}

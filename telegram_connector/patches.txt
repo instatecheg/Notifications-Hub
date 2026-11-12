@@ -2,3 +2,4 @@
 telegram_connector.patches.rename_doctypes_to_hub
 
 [post_model_sync]
+telegram_connector.patches.move_rules_into_hub

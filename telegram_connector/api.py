@@ -41,9 +41,32 @@ def get_enabled_channels():
 
 
 @frappe.whitelist()
+def get_fields(doctype):
+    """Fields of a DocType for the no-code pickers in Notification Hub."""
+    frappe.has_permission("Notification Hub", "write", throw=True)
+    skip = {"Section Break", "Column Break", "Tab Break", "HTML", "Button", "Table", "Table MultiSelect",
+            "Image", "Fold", "Heading", "Attach Image", "Signature", "Geolocation"}
+    std = [{"value": "name", "label": "ID (name)", "fieldtype": "Data"},
+           {"value": "owner", "label": "Created By (owner)", "fieldtype": "Link"},
+           {"value": "modified_by", "label": "Last Updated By (modified_by)", "fieldtype": "Link"},
+           {"value": "docstatus", "label": "Document Status (docstatus: 0 Draft, 1 Submitted, 2 Cancelled)", "fieldtype": "Int"}]
+    out = [{"value": f.fieldname, "label": f"{f.label or f.fieldname} ({f.fieldname})", "fieldtype": f.fieldtype}
+           for f in frappe.get_meta(doctype).fields if f.fieldtype not in skip]
+    return out + std
+
+
+@frappe.whitelist()
+def get_user_telegram_link(user):
+    """Personal Telegram link a user opens once (Start) to receive User Alerts in Bot mode."""
+    frappe.has_permission("Notification Hub", "write", throw=True)
+    link = sender.ensure_link("User", user, frappe.db.get_value("User", user, "mobile_no"))
+    return {"status": link.status, "deep_link": link.deep_link, "name": link.name}
+
+
+@frappe.whitelist()
 def get_preset(doctype):
-    """Ready-made recipient fields + message for the Hub Notification Rule form."""
-    frappe.has_permission("Hub Notification Rule", "write", throw=True)
+    """Ready-made recipient fields + message for a new notification in Notification Hub."""
+    frappe.has_permission("Notification Hub", "write", throw=True)
     from telegram_connector import presets
 
     return presets.get_preset(doctype)
@@ -52,26 +75,25 @@ def get_preset(doctype):
 @frappe.whitelist()
 def preview_message(doctype, name, message):
     """Render a message template against a real document (Preview button)."""
-    frappe.has_permission("Hub Notification Rule", "write", throw=True)
+    frappe.has_permission("Notification Hub", "write", throw=True)
     frappe.has_permission(doctype, "read", name, throw=True)
-    return frappe.render_template(message or "", {"doc": frappe.get_doc(doctype, name)})
+    sample = {"old_value": "(old value)", "new_value": "(new value)", "field_label": "(field)"}
+    return frappe.render_template(message or "", sender.template_context(frappe.get_doc(doctype, name), sample))
 
 
 def _pick_rule(doctype, channel):
-    rules = frappe.get_all(
-        "Hub Notification Rule", filters={"enabled": 1, "document_type": doctype},
-        fields=["name", "event", "channel"],
-    )
-    rules = [r for r in rules if (r.channel or "Telegram") in (channel, "Both")]
+    rules = [r for r in sender.settings().notifications
+             if r.enabled and r.document_type == doctype and (r.channel or "Telegram") in (channel, "Both")]
     if rules:
-        rules.sort(key=lambda r: r.event != "Submit")  # prefer the Submit rule
-        return rules[0].name
+        rules.sort(key=lambda r: r.event != "Submit")  # prefer the Submit notification
+        return rules[0]
     if doctype == "Sales Invoice":
-        # No rule configured: fall back to the built-in default so the button works out of the box
+        # Nothing configured: fall back to the built-in default so the button works out of the box
         from telegram_connector import presets
 
-        return frappe._dict(presets.get_preset("Sales Invoice"), name=None, print_format=None)
-    frappe.throw(f"No enabled Hub Notification Rule found for {doctype}. Please create one first.")
+        return frappe._dict(presets.get_preset("Sales Invoice"), title=None, print_format=None)
+    frappe.throw(f"No enabled notification exists for {doctype}. Please add one in Notification Hub > Notifications.",
+                 title="Notification Not Configured")
 
 
 @frappe.whitelist()
@@ -80,17 +102,18 @@ def notify_customer(doctype, name, channel=None):
     frappe.has_permission(doctype, "read", name, throw=True)
     enabled = sender.enabled_channels()
     if not enabled:
-        frappe.throw("No channel is enabled. Enable Telegram or WhatsApp in Notification Hub.")
+        frappe.throw("No messaging channel is enabled. Please enable Telegram or WhatsApp in Notification Hub.",
+                     title="No Channel Enabled")
     if channel in (None, "", "Both"):
         targets = enabled
     elif channel in enabled:
         targets = [channel]
     else:
-        frappe.throw(f"{channel} is not enabled in Notification Hub")
+        frappe.throw(f"{channel} is not enabled. Please enable it in Notification Hub.", title="Channel Not Enabled")
     results = []
     for ch in targets:
         rule = _pick_rule(doctype, ch)
-        for log in sender.process_rule(rule, doctype, name, force=True, channels=[ch]):
+        for log in sender.process_rule(rule, doctype, name, force=True, channels=[ch], contact_only=True):
             st, err = frappe.db.get_value("Hub Message Log", log, ["status", "error"])
             results.append({"channel": ch, "status": st, "error": err, "log": log})
     return {"results": results}
